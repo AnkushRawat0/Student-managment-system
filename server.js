@@ -4,7 +4,8 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js'
 import studentRoutes from './routes/studentRoutes.js'
-
+import courseRoutes from "./routes/courseRoutes.js"
+import coachRoutes from "./routes/coachRoutes.js";
 
 dotenv.config();
 console.log("MONGO_URI:" ,process.env.MONGO_URI);
@@ -18,6 +19,9 @@ connectDB();
 
 app.use("/api/auth" , authRoutes)
 app.use("/api/students", studentRoutes)
+app.use("/api/courses" ,courseRoutes)
+app.use("/api/coaches", coachRoutes)
+
 
 app.get("/",(req,res)=>{
     res.send("api is running.......")
