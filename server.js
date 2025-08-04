@@ -1,5 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser'
 import cors from 'cors';
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js'
@@ -14,6 +15,7 @@ console.log("MONGO_URI:" ,process.env.MONGO_URI);
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser())
 
 connectDB();
 
