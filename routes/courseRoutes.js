@@ -12,7 +12,7 @@ router.get("/",getAllCourses);
 router.get("/:id",getCourseById);
 
 
-//protect updare and delete
+//protect update and delete course
 router.put("/:id",protect,updateCourse);
 router.delete("/:id",protect,deleteCourse);
 
