@@ -7,16 +7,20 @@ import {
   deleteCoach,
 } from "../controllers/coachController.js";
 import protect from "../middleware/authMiddleware.js"
+import authorizeRoles from "../middleware/roleMiddleware.js";
+
+
+
 
 const router = express.Router();
 
-router.post("/", createCoach);
-router.get("/", getAllCoaches);
-router.get("/:id", getCoachById);
+router.post("/", protect,createCoach);
+router.get("/",protect, getAllCoaches);
+router.get("/:id",protect, getCoachById);
 
 
 //protect update and delete coach
-router.put("/:id",protect, updateCoach);
-router.delete("/:id",protect, deleteCoach);
+router.put("/:id",protect,authorizeRoles("admin") ,updateCoach);
+router.delete("/:id",protect,authorizeRoles("admin"), deleteCoach);
 
 export default router;
