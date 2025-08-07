@@ -8,13 +8,13 @@ import authorizeRoles from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-router.post("/",protect,authorizeRoles("admin"),createCourse);
+router.post("/",protect,authorizeRoles("admin","coach"),createCourse);
 router.get("/",protect,getAllCourses);
 router.get("/:id",protect,getCourseById);
 
 
 //protect update and delete course
-router.put("/:id",protect,authorizeRoles("admin"),updateCourse);
-router.delete("/:id",protect,authorizeRoles("admin"),deleteCourse);
+router.put("/:id",protect,authorizeRoles("admin","coach"),updateCourse);
+router.delete("/:id",protect,authorizeRoles("admin","coach"),deleteCourse);
 
 export default router;

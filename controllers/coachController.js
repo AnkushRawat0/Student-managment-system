@@ -3,9 +3,9 @@ import Coach from "../models/coachSchema.js";
 // Create new coach
 export const createCoach = async (req, res) => {
   try {
-    const { user, expertise, assignedCourses } = req.body;
+    const {  expertise, assignedCourses } = req.body;
 
-    const coach = new Coach({ user, expertise, assignedCourses });
+    const coach = new Coach({ user:req.user._id, expertise, assignedCourses });
     await coach.save();
     res.status(201).json({ message: "Coach created", coach });
   } catch (err) {
