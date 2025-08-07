@@ -6,6 +6,15 @@ export const createStudentProfile = async (req, res) => {
   try {
     const { userId, batch } = req.body;
 
+    if(req.user.role!== "student"){
+      return res.status(403).json({message:"only students can create a student"})
+    }
+
+    const existingProfile = await Student.findOne({user:req.user._id});
+    if(existingProfile){
+      return res.status(400).json({message:"student profile already "})
+    }
+
     const student = new Student({ user: userId, batch });
     await student.save();
 

@@ -14,7 +14,7 @@ import authorizeRoles from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", protect,createCoach);
+router.post("/", protect,authorizeRoles("admin"),createCoach);
 router.get("/",protect, getAllCoaches);
 router.get("/:id",protect, getCoachById);
 
