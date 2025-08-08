@@ -1,11 +1,29 @@
 import Coach from "../models/coachSchema.js";
+import mongoose from "mongoose";
+
+console.log("coach model", Coach);
+console.log("coach schema", Coach.schema);
+
+
+
 
 // Create new coach
 export const createCoach = async (req, res) => {
   try {
-    const {  expertise, assignedCourses } = req.body;
+    console.log("full req body" , req.body);
+    console.log("user value" , req.body.user);
+    console.log("user type " , typeof req.body.user);
+    
+    
 
-    const coach = new Coach({ user:req.user._id, expertise, assignedCourses });
+
+    const { user, expertise, assignedCourses } = req.body;
+
+    if(!mongoose.Types.ObjectId.isValid(user)){
+      return res.status(400).json({error:"invalid user id format"})
+    }
+
+    const coach = new Coach({ user, expertise, assignedCourses });
     await coach.save();
     res.status(201).json({ message: "Coach created", coach });
   } catch (err) {
