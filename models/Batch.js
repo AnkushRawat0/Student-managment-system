@@ -13,7 +13,7 @@ const batchschema = new mongoose.Schema({
     },
     coach:{
         type:mongoose.Schema.Types.ObjectId,
-        ref:"User",
+        ref:"Coach",
         required: true
     },
     startDate:{
