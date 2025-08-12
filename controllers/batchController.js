@@ -2,9 +2,9 @@ import Batch from "../models/Batch.js";
 
 export const createBatch = async(req,res)=>{
     try{
-        const {name,course,coach,startDate,endDate}= req.body;
+        const {name,course,coach,startDate,endDate,students}= req.body;
 
-        const batch = await Batch.create({name,course,coach,startDate,endDate})
+        const batch = await Batch.create({name,course,coach,startDate,endDate,students})
         res.status(201).json(batch);
     }catch(err){
         res.status(500).json({message:err.message})
