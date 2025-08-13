@@ -4,7 +4,7 @@ import User from "../models/User.js";
 // Register a new student (after user is created)
 export const createStudentProfile = async (req, res) => {
   try {
-    const {  batch,feesPaid, enrolledCourses } = req.body;
+    const { user, batch,feesPaid, enrolledCourses } = req.body;
 
     if (!batch) {
       return res.status(400).json({ message: "Batch is required" });
@@ -19,7 +19,7 @@ export const createStudentProfile = async (req, res) => {
       return res.status(400).json({message:"Student profile already exists"})
     }
 
-    const student = new Student({ user: req.user._id, batch, feesPaid: feesPaid??false, enrolledCourses: enrolledCourses || []});
+    const student = new Student({ user, batch, feesPaid: feesPaid??false, enrolledCourses: enrolledCourses || []});
     await student.save();
 
     res.status(201).json({ message: "Student profile created", student });
