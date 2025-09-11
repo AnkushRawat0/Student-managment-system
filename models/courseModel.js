@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const courseSchema = new mongoose.Schema({
     title:{
         type:String,
-        requires:[true, "course title is required"],
+        required:[true, "course title is required"],
         trim:true
     },
     description:{
@@ -18,6 +18,11 @@ const courseSchema = new mongoose.Schema({
         type: Number,
         required:[true, "course fee is req"],
         min:[0, "fee must be positive number"]
+    },
+    coach: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Coach",
+        required: true
     },
     createdAt:{
         type:Date,
