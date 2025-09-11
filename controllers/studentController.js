@@ -14,7 +14,7 @@ export const createStudentProfile = async (req, res) => {
       return res.status(403).json({message:"Only students can create a student"})
     }
 
-    const existingProfile = await Student.findOne({user:req.user._id});
+    const existingProfile = await Student.findOne({user:req.user.id});
     if(existingProfile){
       return res.status(400).json({message:"Student profile already exists"})
     }
@@ -49,7 +49,7 @@ export const getStudentById = async (req, res) => {
     const student = await Student.findById(req.params.id).populate("user", "-password");
     if (!student) return res.status(404).json({ message: "Student not found" });
 
-    if(req.user.role!=="admin" && req.user._id !== student.user.toString()){
+    if(req.user.role!=="admin" && req.user.id !== student.user.toString()){
       return res.status(403).json({message:"Access denied"})
     }
     res.status(200).json(student);
