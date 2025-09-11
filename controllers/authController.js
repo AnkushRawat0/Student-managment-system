@@ -33,7 +33,7 @@ export const loginUser = async (req,res)=>{
         if(!user) return res.status(404).json({message:"user not found"})
 
         const isMatch = await bcrypt.compare(password,user.password);
-        if (!isMatch) return res.status(400).json({message:"Invalid credeentials"})
+        if (!isMatch) return res.status(400).json({message:"Invalid credentials"})
 
         const token = jwt.sign({id:user._id, role: user.role },process.env.JWT_SECRET,{
             expiresIn: "1d",
@@ -46,12 +46,7 @@ export const loginUser = async (req,res)=>{
 
 export const logoutUser = async(req,res)=>{
     try{
-        res.clearCookie('token',{
-            httpOnly: true,
-            sameSite: 'strict',
-            secure: process.env.NODE_ENV==='production',
-        })
-        res.status(200).json({message:'logged out successfully'})
+           res.status(200).json({message:'logged out successfully'})
     }catch(error){
         res.status(500).json({message: 'Error during logout', error:error.message})
     }

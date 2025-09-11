@@ -10,7 +10,7 @@ import coachRoutes from "./routes/coachRoutes.js";
 import batchRoutes from "./routes/batchRoutes.js"
 
 dotenv.config();
-console.log("MONGO_URI:" ,process.env.MONGO_URI);
+
 
 
 const app = express();
