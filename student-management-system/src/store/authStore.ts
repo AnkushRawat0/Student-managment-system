@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 interface User {
   id: string;
@@ -21,88 +22,100 @@ interface AuthState {
   setLoading: (loading: boolean) => void;
 }
 
-// Create the Zustand store
-export const useAuthStore = create<AuthState>((set, get) => ({
-  // Initial state
-  user: null,
-  isAuthenticated: false,
-  isLoading: false,
-  
-  // Actions
-  login: async (email: string, password: string) => {
-    set({ isLoading: true })
-    
-    try {
-      // Call real API
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password })
-      })
+// Create the Zustand store with persistence
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      // Initial state
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
       
-      const data = await response.json()
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed')
-      }
-      
-      // Login successful
-      set({ 
-        user: data.user, 
-        isAuthenticated: true, 
-        isLoading: false 
-      })
-    } catch (error) {
-      set({ isLoading: false })
-      throw error
-    }
-  },
+      // Actions
+      login: async (email: string, password: string) => {
+        set({ isLoading: true })
+        
+        try {
+          // Call real API
+          const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password })
+          })
+          
+          const data = await response.json()
+          
+          if (!response.ok) {
+            throw new Error(data.error || 'Login failed')
+          }
+          
+          // Login successful
+          set({ 
+            user: data.user, 
+            isAuthenticated: true, 
+            isLoading: false 
+          })
+        } catch (error) {
+          set({ isLoading: false })
+          throw error
+        }
+      },
 
-  register: async (name: string, email: string, password: string, role: string) => {
-    set({ isLoading: true })
-    
-    try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, password, role })
-      })
+      register: async (name: string, email: string, password: string, role: string) => {
+        set({ isLoading: true })
+        
+        try {
+          const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name, email, password, role })
+          })
+          
+          const data = await response.json()
+          
+          if (!response.ok) {
+            throw new Error(data.error || 'Registration failed')
+          }
+          
+          // Registration successful - don't auto-login, just stop loading
+          set({ isLoading: false })
+          
+        } catch (error) {
+          set({ isLoading: false })
+          throw error
+        }
+      },
       
-      const data = await response.json()
+      logout: () => {
+        set({ 
+          user: null, 
+          isAuthenticated: false 
+        })
+      },
       
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed')
+      setUser: (user: User) => {
+        set({ 
+          user, 
+          isAuthenticated: true 
+        })
+      },
+      
+      setLoading: (isLoading: boolean) => {
+        set({ isLoading })
       }
-      
-      // Registration successful - don't auto-login, just stop loading
-      set({ isLoading: false })
-      
-    } catch (error) {
-      set({ isLoading: false })
-      throw error
+    }),
+    {
+      name: 'auth-storage', // localStorage key
+      partialize: (state) => ({ 
+        user: state.user, 
+        isAuthenticated: state.isAuthenticated 
+      }), // Only persist these fields
     }
-  },
-  
-  logout: () => {
-    set({ 
-      user: null, 
-      isAuthenticated: false 
-    })
-  },
-  
-  setUser: (user: User) => {
-    set({ 
-      user, 
-      isAuthenticated: true 
-    })
-  },
-   setLoading: (isLoading: boolean) => {
-    set({ isLoading })
-  }
-}))
+  )
+)
 
 export type { User, AuthState }
