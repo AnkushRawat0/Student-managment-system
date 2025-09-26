@@ -15,6 +15,7 @@ interface AuthState {
 
   //actions
   login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string, role: string) => Promise<void>;
   logout: () => void;
   setUser: (user: User) => void;
   setLoading: (loading: boolean) => void;
@@ -53,6 +54,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: true, 
         isLoading: false 
       })
+    } catch (error) {
+      set({ isLoading: false })
+      throw error
+    }
+  },
+
+  register: async (name: string, email: string, password: string, role: string) => {
+    set({ isLoading: true })
+    
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password, role })
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed')
+      }
+      
+      // Registration successful - don't auto-login, just stop loading
+      set({ isLoading: false })
+      
     } catch (error) {
       set({ isLoading: false })
       throw error
