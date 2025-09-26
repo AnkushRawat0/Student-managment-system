@@ -32,18 +32,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true })
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Call real API
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password })
+      })
       
-      // Mock successful login
-      const mockUser: User = {
-        id: '1',
-        name: 'John Doe',
-        email: email,
-        role: 'STUDENT'
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed')
       }
-       set({ 
-        user: mockUser, 
+      
+      // Login successful
+      set({ 
+        user: data.user, 
         isAuthenticated: true, 
         isLoading: false 
       })
