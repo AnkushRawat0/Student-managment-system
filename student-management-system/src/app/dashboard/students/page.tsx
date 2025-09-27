@@ -78,6 +78,51 @@ export default function StudentsPage() {
     );
   }
 
+  const handleAddStudent = async () => {
+    try {
+      // Validate form data
+      if (!newStudent.name || !newStudent.email || !newStudent.age || !newStudent.course) {
+        alert('Please fill in all fields');
+        return;
+      }
+
+      // Send data to API
+      const response = await fetch('/api/students', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newStudent.name,
+          email: newStudent.email,
+          age: newStudent.age,
+          course: newStudent.course,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const errorMessage = data.error || `HTTP Error: ${response.status}`;
+        throw new Error(errorMessage);
+      }
+
+      // Success! Close modal and refresh list
+      setShowAddModal(false);
+      setNewStudent({ name: '', email: '', age: '', course: '' });
+      
+      // Refresh the students list
+      const studentsResponse = await fetch('/api/students');
+      const studentsData = await studentsResponse.json();
+      setStudents(studentsData.students || []);
+
+      alert('Student added successfully!');
+    } catch (error) {
+      console.error('Error adding student:', error);
+      alert('Failed to add student: ' + (error as Error).message);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
@@ -154,10 +199,7 @@ export default function StudentsPage() {
               Cancel
             </Button>
              <Button 
-              onClick={() => {
-                // We'll add the submit logic here next
-                console.log('Creating student:', newStudent);
-              }}
+              onClick={handleAddStudent}
               className="flex-1"
             >
               Add Student
@@ -178,7 +220,7 @@ export default function StudentsPage() {
         <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-gray-900">All Students</h2>
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={()=> setShowAddModal(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />
