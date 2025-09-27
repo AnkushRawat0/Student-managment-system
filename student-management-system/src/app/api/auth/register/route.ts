@@ -29,6 +29,17 @@ export async function POST(request: NextRequest) {
 
         })
 
+        // If registering as a student, create student record too
+        if (parsedData.role === 'STUDENT') {
+            await prisma.student.create({
+                data: {
+                    userId: newUser.id,
+                    age: 22, // Default age - we'll make this configurable later
+                    course: 'Web Development', // Default course - we'll make this configurable later
+                },
+            });
+        }
+
         return NextResponse.json({message : "user successfully registered" ,
             user : {
                 id: newUser.id , 
