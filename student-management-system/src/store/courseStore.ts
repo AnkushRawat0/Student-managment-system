@@ -8,7 +8,7 @@ interface CourseState {
   courses: Course[];
   filteredCourses: Course[];
   selectedCourse: Course | null;
-  
+
   // UI state
   isLoading: boolean;
   error: string | null;
@@ -18,25 +18,24 @@ interface CourseState {
 
   // Filter state
   filters: CourseFiltersData;
-  
+
   // Actions
   fetchCourses: () => Promise<void>;
   createCourse: (data: CourseFormData) => Promise<void>;
   updateCourse: (id: string, data: Partial<CourseFormData>) => Promise<void>;
   deleteCourse: (id: string) => Promise<void>;
-  
+
   // UI Actions
   setShowAddModal: (show: boolean) => void;
   setShowEditModal: (show: boolean) => void;
   setShowDeleteDialog: (show: boolean) => void;
   setSelectedCourse: (course: Course | null) => void;
-  
+
   // Filter Actions
   setFilters: (filters: Partial<CourseFiltersData>) => void;
   applyFilters: () => void;
   clearError: () => void;
 }
-
 
 export const useCoursesStore = create<CourseState>()(
   persist(
@@ -51,32 +50,34 @@ export const useCoursesStore = create<CourseState>()(
       showEditModal: false,
       showDeleteDialog: false,
       filters: {},
-       // Fetch all courses
+      // Fetch all courses
       fetchCourses: async () => {
         set({ isLoading: true, error: null });
         try {
           const params = new URLSearchParams();
           const { filters } = get();
-          
-          if (filters.searchTerm) params.append("searchTerm", filters.searchTerm);
+
+          if (filters.searchTerm)
+            params.append("searchTerm", filters.searchTerm);
           if (filters.status) params.append("status", filters.status);
-          if (filters.instructor) params.append("instructor", filters.instructor);
+          if (filters.instructor)
+            params.append("instructor", filters.instructor);
 
           const response = await fetch(`/api/courses?${params.toString()}`);
           if (!response.ok) throw new Error("Failed to fetch courses");
-          
+
           const data = await response.json();
-          set({ 
-            courses: data.courses, 
+          set({
+            courses: data.courses,
             filteredCourses: data.courses,
-            isLoading: false 
+            isLoading: false,
           });
         } catch (error: any) {
-          set({ 
-            error: error.message || "Failed to fetch courses", 
-            isLoading: false 
+          set({
+            error: error.message || "Failed to fetch courses",
+            isLoading: false,
           });
-            }
+        }
       },
 
       // Create new course
@@ -96,7 +97,7 @@ export const useCoursesStore = create<CourseState>()(
             }
             throw new Error(errorData.error || "Failed to create course");
           }
-             const { course } = await response.json();
+          const { course } = await response.json();
           set((state) => ({
             courses: [course, ...state.courses],
             filteredCourses: [course, ...state.filteredCourses],
@@ -108,7 +109,7 @@ export const useCoursesStore = create<CourseState>()(
           throw error;
         }
       },
-        // Update existing course
+      // Update existing course
       updateCourse: async (id: string, data: Partial<CourseFormData>) => {
         set({ isLoading: true, error: null });
         try {
@@ -125,10 +126,12 @@ export const useCoursesStore = create<CourseState>()(
             }
             throw new Error(errorData.error || "Failed to update course");
           }
-           const { course } = await response.json();
+          const { course } = await response.json();
           set((state) => ({
             courses: state.courses.map((c) => (c.id === id ? course : c)),
-            filteredCourses: state.filteredCourses.map((c) => (c.id === id ? course : c)),
+            filteredCourses: state.filteredCourses.map((c) =>
+              c.id === id ? course : c
+            ),
             isLoading: false,
             showEditModal: false,
           }));
@@ -137,7 +140,7 @@ export const useCoursesStore = create<CourseState>()(
           throw error;
         }
       },
-      
+
       // Delete course
       deleteCourse: async (id: string) => {
         set({ isLoading: true, error: null });
@@ -159,9 +162,9 @@ export const useCoursesStore = create<CourseState>()(
             selectedCourse: null,
           }));
         } catch (error: any) {
-             set({ 
-            error: error.message || "Failed to delete course", 
-            isLoading: false 
+          set({
+            error: error.message || "Failed to delete course",
+            isLoading: false,
           });
         }
       },
@@ -170,7 +173,8 @@ export const useCoursesStore = create<CourseState>()(
       setShowAddModal: (show: boolean) => set({ showAddModal: show }),
       setShowEditModal: (show: boolean) => set({ showEditModal: show }),
       setShowDeleteDialog: (show: boolean) => set({ showDeleteDialog: show }),
-      setSelectedCourse: (course: Course | null) => set({ selectedCourse: course }),
+      setSelectedCourse: (course: Course | null) =>
+        set({ selectedCourse: course }),
 
       // Filter Actions
       setFilters: (newFilters: Partial<CourseFiltersData>) => {
@@ -180,7 +184,7 @@ export const useCoursesStore = create<CourseState>()(
         });
         get().applyFilters();
       },
-  applyFilters: () => {
+      applyFilters: () => {
         const { courses, filters } = get();
         let filtered = [...courses];
 
@@ -193,8 +197,10 @@ export const useCoursesStore = create<CourseState>()(
               course.instructor.toLowerCase().includes(searchLower)
           );
         }
- if (filters.status) {
-          filtered = filtered.filter((course) => course.status === filters.status);
+        if (filters.status) {
+          filtered = filtered.filter(
+            (course) => course.status === filters.status
+          );
         }
 
         if (filters.instructor) {
@@ -211,11 +217,10 @@ export const useCoursesStore = create<CourseState>()(
     }),
     {
       name: "course-store",
-      partialize: (state) => ({ 
+      partialize: (state) => ({
         courses: state.courses,
-        filters: state.filters 
+        filters: state.filters,
       }),
     }
   )
 );
-

@@ -59,3 +59,29 @@ enum Role {
   COACH
   STUDENT
 }
+
+model Course {
+  id String @id @default(cuid())
+  name String
+  description String
+  instructor String
+  duration      Int         // duration in weeks
+  maxStudents   Int
+  startDate     DateTime
+  endDate       DateTime
+  status        CourseStatus @default(DRAFT)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@map("course")
+
+  
+}
+
+enum CourseStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  CANCELLED
+
+}

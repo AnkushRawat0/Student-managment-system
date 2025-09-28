@@ -23,6 +23,36 @@ export function Header() {
                     </h1>
                 </div>
 
+                {/* Navigation Links */}
+                {user?.role === "ADMIN" && (
+                    <nav className="flex items-center gap-6">
+                        <a 
+                            href="/dashboard" 
+                            className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                        >
+                            Dashboard
+                        </a>
+                        <a 
+                            href="/dashboard/students" 
+                            className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                        >
+                            Students
+                        </a>
+                        <a 
+                            href="/dashboard/courses" 
+                            className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                        >
+                            Courses
+                        </a>
+                        <a 
+                            href="/dashboard/settings" 
+                            className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                        >
+                            Settings
+                        </a>
+                    </nav>
+                )}
+
                 {/* right side user profile and settings */}
                 <div className="flex items-center gap-4">
                     {/* User info */}
