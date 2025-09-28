@@ -7,10 +7,11 @@ import { useStudentsStore } from "@/store/studentStore";
 import { StudentFilter } from "@/components/students/StudentFilter";
 import { StudentsTable } from "@/components/students/StudentTable";
 import { AddStudentModal } from "@/components/students/StudentModal";
+import { EditStudentModal } from "@/components/students/EditStudentModal";
 
 export default function StudentsPage() {
   const { user, isAuthenticated } = useAuthStore();
-  const { fetchStudents, error, clearError } = useStudentsStore();
+  const { fetchStudents, error, clearError, showEditModal, selectedStudent, setShowEditModal } = useStudentsStore();
   const router = useRouter();
   const [isAuthReady, setIsAuthReady] = useState(false);
 
@@ -102,6 +103,13 @@ export default function StudentsPage() {
 
       {/* Modals */}
       <AddStudentModal />
+      {selectedStudent && (
+        <EditStudentModal 
+          student={selectedStudent}
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+        />
+      )}
     </div>
   );
 }
