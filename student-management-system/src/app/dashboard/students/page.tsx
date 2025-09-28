@@ -8,10 +8,11 @@ import { StudentFilter } from "@/components/students/StudentFilter";
 import { StudentsTable } from "@/components/students/StudentTable";
 import { AddStudentModal } from "@/components/students/StudentModal";
 import { EditStudentModal } from "@/components/students/EditStudentModal";
+import { DeleteStudentDialog } from "@/components/students/DeleteStudentDialog";
 
 export default function StudentsPage() {
   const { user, isAuthenticated } = useAuthStore();
-  const { fetchStudents, error, clearError, showEditModal, selectedStudent, setShowEditModal } = useStudentsStore();
+  const { fetchStudents, error, clearError, showEditModal, selectedStudent, setShowEditModal, showDeleteDialog, setShowDeleteDialog } = useStudentsStore();
   const router = useRouter();
   const [isAuthReady, setIsAuthReady] = useState(false);
 
@@ -108,6 +109,13 @@ export default function StudentsPage() {
           student={selectedStudent}
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
+        />
+      )}
+      {selectedStudent && (
+        <DeleteStudentDialog 
+          student={selectedStudent}
+          isOpen={showDeleteDialog}
+          onClose={() => setShowDeleteDialog(false)}
         />
       )}
     </div>
