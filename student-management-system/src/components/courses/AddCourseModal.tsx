@@ -175,10 +175,10 @@ export function AddCourseModal() {
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="DRAFT">Draft</SelectItem>
-                    <SelectItem value="ACTIVE">Active</SelectItem>
-                    <SelectItem value="COMPLETED">Completed</SelectItem>
-                    <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                    <SelectItem value={CourseStatus.DRAFT}>Draft</SelectItem>
+                    <SelectItem value={CourseStatus.ACTIVE}>Active</SelectItem>
+                    <SelectItem value={CourseStatus.COMPLETED}>Completed</SelectItem>
+                    <SelectItem value={CourseStatus.CANCELLED}>Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
                 {errors.status && <div className="text-red-500 text-sm">{errors.status}</div>}

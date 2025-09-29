@@ -74,9 +74,9 @@ export async function PUT(
     
     if (error.name === "ZodError") {
       const fieldErrors: { [key: string]: string } = {};
-      error.errors.forEach((err: any) => {
-        if (err.path) {
-          fieldErrors[err.path[0]] = err.message;
+      error.issues?.forEach((issue: any) => {
+        if (issue.path && issue.path.length > 0) {
+          fieldErrors[issue.path[0]] = issue.message;
         }
       });
       return NextResponse.json({ fieldErrors }, { status: 400 });

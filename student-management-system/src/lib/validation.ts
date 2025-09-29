@@ -65,9 +65,7 @@ export const courseSchema = z.object({
     .number()
     .min(1, "Must allow at least 1 student")
     .max(100, "Cannot exceed 100 students"),
-  startDate: z.date({
-    message: "Start date is required",
-  }),
+  startDate: z.string().min(1, "Start date is required").transform((str) => new Date(str)),
   status: z.enum(["DRAFT", "ACTIVE", "COMPLETED", "CANCELLED"]),
 });
 

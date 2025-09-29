@@ -67,13 +67,14 @@ model Course {
   instructor String
   duration      Int         // duration in weeks
   maxStudents   Int
+  currentStudents Int @default(0)
   startDate     DateTime
   endDate       DateTime
   status        CourseStatus @default(DRAFT)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
-  @@map("course")
+  @@map("courses")
 
   
 }
