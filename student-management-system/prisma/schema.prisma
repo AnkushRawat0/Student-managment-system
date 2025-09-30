@@ -1,16 +1,10 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -21,14 +15,11 @@ model User {
   role      Role     @default(STUDENT)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  // Relations
+  coach     Coach?
   student   Student?
-  coach   Coach?
-  
+
   @@map("users")
 }
-
 
 model Student {
   id             String   @id @default(cuid())
@@ -36,22 +27,35 @@ model Student {
   age            Int
   course         String
   enrollmentDate DateTime @default(now())
-  
-  // Relations
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@map("students")
 }
 
 model Coach {
-  id       String @id @default(cuid())
-  userId   String @unique
-  subject  String
-  
-  // Relations
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id      String @id @default(cuid())
+  userId  String @unique
+  subject String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("coach")
+}
+
+model Course {
+  id              String       @id @default(cuid())
+  name            String
+  description     String
+  instructor      String
+  duration        Int
+  maxStudents     Int
+  currentStudents Int          @default(0)
+  startDate       DateTime
+  endDate         DateTime
+  status          CourseStatus @default(DRAFT)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@map("courses")
 }
 
 enum Role {
@@ -60,29 +64,9 @@ enum Role {
   STUDENT
 }
 
-model Course {
-  id String @id @default(cuid())
-  name String
-  description String
-  instructor String
-  duration      Int         // duration in weeks
-  maxStudents   Int
-  currentStudents Int @default(0)
-  startDate     DateTime
-  endDate       DateTime
-  status        CourseStatus @default(DRAFT)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-
-  @@map("courses")
-
-  
-}
-
 enum CourseStatus {
   DRAFT
   ACTIVE
   COMPLETED
   CANCELLED
-
 }
