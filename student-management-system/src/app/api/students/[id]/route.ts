@@ -5,12 +5,13 @@ import { updateStudentSchema } from "@/lib/validation";
 
 export async function GET (
     request : NextRequest ,
-    {params} : {params : { id: string}}
+    {params} : {params : Promise<{ id: string}>}
 
 ){
     try {
+        const { id } = await params;
         const student = await prisma.student.findUnique({
-            where: {id :params.id},
+            where: {id},
             include: {
                 user : {
                     select : {
@@ -42,9 +43,10 @@ export async function GET (
 //UPDATE STUDENT
 export async function PUT(
     request : NextRequest ,
-    {params}  : {params : {id: string}}
+    {params}  : {params : Promise<{id: string}>}
 ){
     try{
+        const { id } = await params;
         const body  = await request.json() ;
         const validatedData = updateStudentSchema.parse(body);
 
@@ -62,7 +64,7 @@ export async function PUT(
 
           // First, get the student to find the user ID
     const student = await prisma.student.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { user: true }
     });
 
@@ -85,7 +87,7 @@ export async function PUT(
     let updatedStudent;
     if (Object.keys(updateStudentData).length > 0) {
       updatedStudent = await prisma.student.update({
-        where: { id: params.id },
+        where: { id },
         data: updateStudentData,
         include: {
           user: {
@@ -100,7 +102,7 @@ export async function PUT(
     } else {
          // Refetch with updated user data
       updatedStudent = await prisma.student.findUnique({
-        where: { id: params.id },
+        where: { id },
         include: {
           user: {
             select: {
@@ -138,12 +140,13 @@ export async function PUT(
 // DELETE student
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // Find the student first to get the user ID
     const student = await prisma.student.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { user: true }
     });
 
@@ -156,7 +159,7 @@ export async function DELETE(
 
      // Delete student (this will cascade delete due to our schema)
     await prisma.student.delete({
-      where: { id: params.id }
+      where: { id }
     });
 
     // Delete the associated user

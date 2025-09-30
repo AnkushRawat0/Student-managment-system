@@ -5,11 +5,12 @@ import { updateCourseSchema } from "@/lib/validation";
 // GET - Fetch single course
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const course = await prisma.course.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!course) {
@@ -32,15 +33,16 @@ export async function GET(
 // PUT - Update course
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const validatedData = updateCourseSchema.parse(body);
 
     // Check if course exists
     const existingCourse = await prisma.course.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingCourse) {
@@ -64,7 +66,7 @@ export async function PUT(
     }
 
     const course = await prisma.course.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
     });
 
@@ -92,12 +94,13 @@ export async function PUT(
 // DELETE - Delete course
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // Check if course exists
     const course = await prisma.course.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!course) {
@@ -109,7 +112,7 @@ export async function DELETE(
 
     // Delete the course
     await prisma.course.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ 
