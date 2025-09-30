@@ -1,22 +1,55 @@
 "use client";
 
 import { useAuthStore } from "@/store/authStore";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, BookOpen, UserCheck, TrendingUp, Plus, Calendar } from "lucide-react";
+import {
+  Users,
+  BookOpen,
+  UserCheck,
+  TrendingUp,
+  Plus,
+  Calendar,
+} from "lucide-react";
 
 export default function DashboardPage() {
   const { user, isAuthenticated } = useAuthStore();
   const router = useRouter();
 
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    totalCourses: 0,
+    activeCourses: 0,
+    totalCoaches: 0,
+    recentStudents: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
   // Redirect if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push('/');
+      router.push("/");
     }
   }, [isAuthenticated, router]);
+
+  // Add this useEffect to fetch real data
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch("/api/dashboard/stats");
+        const data = await response.json();
+        setStats(data);
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   if (!isAuthenticated || !user) {
     return (
@@ -34,9 +67,11 @@ export default function DashboardPage() {
           Welcome back, {user.name}! 👋
         </h1>
         <p className="text-blue-100 text-lg">
-          {user.role === 'ADMIN' ? 'Manage your institution effectively' : 
-           user.role === 'COACH' ? 'Guide your students to success' : 
-           'Track your learning journey'}
+          {user.role === "ADMIN"
+            ? "Manage your institution effectively"
+            : user.role === "COACH"
+            ? "Guide your students to success"
+            : "Track your learning journey"}
         </p>
       </div>
 
@@ -50,10 +85,12 @@ export default function DashboardPage() {
             <Users className="h-5 w-5 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-gray-900">248</div>
+            <div className="text-3xl font-bold text-gray-900">
+              {loading ? "..." : stats.totalStudents}
+            </div>
             <p className="text-xs text-green-600 flex items-center mt-1">
               <TrendingUp className="h-3 w-3 mr-1" />
-              +12% from last month
+              +{loading ? "..." : stats.recentStudents} new this month
             </p>
           </CardContent>
         </Card>
@@ -66,7 +103,9 @@ export default function DashboardPage() {
             <BookOpen className="h-5 w-5 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-gray-900">18</div>
+            <div className="text-3xl font-bold text-gray-900">
+              {loading ? "..." : stats.activeCourses}
+            </div>
             <p className="text-xs text-green-600 flex items-center mt-1">
               <TrendingUp className="h-3 w-3 mr-1" />
               +3 new courses
@@ -82,7 +121,9 @@ export default function DashboardPage() {
             <UserCheck className="h-5 w-5 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-gray-900">32</div>
+            <div className="text-3xl font-bold text-gray-900">
+              {loading ? "..." : stats.totalCoaches}
+            </div>
             <p className="text-xs text-blue-600 flex items-center mt-1">
               <Calendar className="h-3 w-3 mr-1" />
               Available now
@@ -112,51 +153,73 @@ export default function DashboardPage() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl font-semibold">Quick Actions</CardTitle>
+              <CardTitle className="text-xl font-semibold">
+                Quick Actions
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {user.role === 'ADMIN' && (
+                {user.role === "ADMIN" && (
                   <>
                     <Button className="h-16 flex flex-col gap-2" size="lg">
                       <Plus className="h-5 w-5" />
                       Add New Student
                     </Button>
-                    <Button variant="outline" className="h-16 flex flex-col gap-2" size="lg">
+                    <Button
+                      variant="outline"
+                      className="h-16 flex flex-col gap-2"
+                      size="lg"
+                    >
                       <BookOpen className="h-5 w-5" />
                       Create Course
                     </Button>
-                    <Button variant="outline" className="h-16 flex flex-col gap-2" size="lg">
+                    <Button
+                      variant="outline"
+                      className="h-16 flex flex-col gap-2"
+                      size="lg"
+                    >
                       <UserCheck className="h-5 w-5" />
                       Assign Coach
                     </Button>
-                    <Button variant="outline" className="h-16 flex flex-col gap-2" size="lg">
+                    <Button
+                      variant="outline"
+                      className="h-16 flex flex-col gap-2"
+                      size="lg"
+                    >
                       <TrendingUp className="h-5 w-5" />
                       View Reports
                     </Button>
                   </>
                 )}
-                
-                {user.role === 'COACH' && (
+
+                {user.role === "COACH" && (
                   <>
                     <Button className="h-16 flex flex-col gap-2" size="lg">
                       <Users className="h-5 w-5" />
                       My Students
                     </Button>
-                    <Button variant="outline" className="h-16 flex flex-col gap-2" size="lg">
+                    <Button
+                      variant="outline"
+                      className="h-16 flex flex-col gap-2"
+                      size="lg"
+                    >
                       <Calendar className="h-5 w-5" />
                       Schedule Session
                     </Button>
                   </>
                 )}
-                
-                {user.role === 'STUDENT' && (
+
+                {user.role === "STUDENT" && (
                   <>
                     <Button className="h-16 flex flex-col gap-2" size="lg">
                       <BookOpen className="h-5 w-5" />
                       My Courses
                     </Button>
-                    <Button variant="outline" className="h-16 flex flex-col gap-2" size="lg">
+                    <Button
+                      variant="outline"
+                      className="h-16 flex flex-col gap-2"
+                      size="lg"
+                    >
                       <Calendar className="h-5 w-5" />
                       View Schedule
                     </Button>
@@ -170,7 +233,9 @@ export default function DashboardPage() {
         {/* Recent Activity */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl font-semibold">Recent Activity</CardTitle>
+            <CardTitle className="text-xl font-semibold">
+              Recent Activity
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

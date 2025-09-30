@@ -35,6 +35,10 @@ export async function POST(request : NextRequest) {
 
     }
     catch(error){
-        return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+        console.error("Login API Error:", error);
+        return NextResponse.json({ 
+            error: "Something went wrong", 
+            details: process.env.NODE_ENV === 'development' ? error : undefined 
+        }, { status: 500 });
  }
 }
