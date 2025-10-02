@@ -45,6 +45,12 @@ export function Header() {
                             Courses
                         </a>
                         <a 
+                            href="/dashboard/coaches" 
+                            className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                        >
+                            Coaches
+                        </a>
+                        <a 
                             href="/dashboard/settings" 
                             className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                         >
