@@ -79,6 +79,47 @@ export const courseFiltersSchema = z.object({
   instructor: z.string().optional(),
 });
 
+// Coach validation schemas
+export const coachSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Name must be at least 2 characters")
+    .max(50, "Name must be less than 50 characters"),
+  email: z.string().email("Invalid email format").toLowerCase(),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  subject: z
+    .string()
+    .min(2, "Subject must be at least 2 characters")
+    .max(100, "Subject name must be less than 100 characters"),
+});
+
+// Coach update schema (all fields optional except password which should be handled separately)
+export const updateCoachSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Name must be at least 2 characters")
+    .max(50, "Name must be less than 50 characters")
+    .optional(),
+  email: z.string().email("Invalid email format").toLowerCase().optional(),
+  subject: z
+    .string()
+    .min(2, "Subject must be at least 2 characters")
+    .max(100, "Subject name must be less than 100 characters")
+    .optional(),
+});
+
+// Coach filters schema
+export const coachFiltersSchema = z.object({
+  searchTerm: z.string().optional(),
+  subject: z.string().optional(),
+});
+
+// Course assignment schema
+export const courseAssignmentSchema = z.object({
+  coachId: z.string().min(1, "Coach ID is required"),
+  courseId: z.string().min(1, "Course ID is required"),
+});
+
 //export types
 export type LoginInput = z.infer<typeof loginSchmea>;
 export type RegisterInput = z.infer<typeof registerSchema>;
@@ -90,3 +131,8 @@ export type CourseInput = z.infer<typeof courseSchema>;
 export type CourseFormData = z.infer<typeof courseSchema>;
 export type UpdateCourseData = z.infer<typeof updateCourseSchema>;
 export type CourseFiltersData = z.infer<typeof courseFiltersSchema>;
+export type CoachInput = z.infer<typeof coachSchema>;
+export type CoachFormData = z.infer<typeof coachSchema>;
+export type UpdateCoachData = z.infer<typeof updateCoachSchema>;
+export type CoachFiltersData = z.infer<typeof coachFiltersSchema>;
+export type CourseAssignmentData = z.infer<typeof courseAssignmentSchema>;
