@@ -38,6 +38,9 @@ model Coach {
   subject String
   user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+
+  courseAssignments CourseAssignment[]
+
   @@map("coach")
 }
 
@@ -54,9 +57,24 @@ model Course {
   status          CourseStatus @default(DRAFT)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
+    
+  courseAssignments CourseAssignment[]
 
   @@map("courses")
 }
+
+model CourseAssignment {
+  id       String @id @default(cuid())
+  courseId String
+  coachId  String
+  
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  coach    Coach  @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  
+  assignedAt DateTime @default(now())
+  
+  @@unique([courseId, coachId])
+} 
 
 enum Role {
   ADMIN
