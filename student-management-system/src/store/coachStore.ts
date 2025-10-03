@@ -76,7 +76,7 @@ export const useCoachStore = create<CoachState>()(
       selectedCoach: null,
       filters: {
         search: '',
-        subject: ''
+        subject: 'all'
       },
 
       // Fetch Coaches
