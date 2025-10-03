@@ -48,7 +48,7 @@ export default function StudentsPage() {
     if (user?.role === "ADMIN") {
       fetchStudents();
     }
-  }, [user, fetchStudents]);
+  }, [user?.role]); // Only depend on user role, not fetchStudents
 
   // Loading state while checking auth
   if (!isAuthReady || !isAuthenticated || !user) {
