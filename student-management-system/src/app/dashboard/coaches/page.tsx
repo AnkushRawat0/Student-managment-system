@@ -1,81 +1,109 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { CoachFilter } from "@/components/coach/CoachFilter";
+import { AddCoachModal } from "@/components/coach/AddCoachModal";
+import { CoachTable } from "@/components/coach/CoachTable";
+import { EditCoachModal } from "@/components/coach/EditCoachModal";
+import { DeleteCoachModal } from "@/components/coach/DeleteCoachModal";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Plus, Search, Users, BookOpen } from "lucide-react";
+import { Plus, Users } from "lucide-react";
+import { useCoachStore } from "@/store/coachStore";
 
 export default function CoachesPage() {
-  const { user, isAuthenticated } = useAuthStore();
-  const [coaches, setCoaches] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const { user } = useAuthStore();
+  const { 
+    coaches, 
+    loading, 
+    error, 
+    fetchCoaches, 
+    setAddModalOpen 
+  } = useCoachStore();
+
+  // Fetch coaches on mount (hook must be called before any conditional returns)
+  useEffect(() => {
+    if (user?.role === 'ADMIN') {
+      fetchCoaches();
+    }
+  }, [user?.role]);
 
   // Only allow ADMIN access
   if (user?.role !== 'ADMIN') {
     return <div>Access Denied - Admin Only</div>;
   }
 
+  const handleAddCoach = () => {
+    setAddModalOpen(true);
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Coach Management</h1>
-          <p className="text-gray-600">Manage coaches and their course assignments</p>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Users className="h-6 w-6" />
+            Coaches
+          </h1>
+          <p className="text-gray-600">
+            Manage coaches and their course assignments
+          </p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700">
+        <Button 
+          onClick={handleAddCoach}
+          className="w-full sm:w-auto"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Add Coach
         </Button>
       </div>
 
-      {/* Search and Filter */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Search coaches by name or subject..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full"
-              />
-            </div>
-            <Button variant="outline">
-              <Search className="h-4 w-4 mr-2" />
-              Search
-            </Button>
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-lg border">
+          <div className="text-2xl font-bold text-blue-600">
+            {coaches.length}
           </div>
-        </CardContent>
-      </Card>
+          <div className="text-sm text-gray-600">Total Coaches</div>
+        </div>
+        <div className="bg-white p-4 rounded-lg border">
+          <div className="text-2xl font-bold text-green-600">
+            {coaches.filter(coach => coach.courseAssignments && coach.courseAssignments.length > 0).length}
+          </div>
+          <div className="text-sm text-gray-600">Active Assignments</div>
+        </div>
+        <div className="bg-white p-4 rounded-lg border">
+          <div className="text-2xl font-bold text-purple-600">
+            {coaches.reduce((total, coach) => total + (coach.totalStudents || 0), 0)}
+          </div>
+          <div className="text-sm text-gray-600">Total Students</div>
+        </div>
+        <div className="bg-white p-4 rounded-lg border">
+          <div className="text-2xl font-bold text-orange-600">
+            {new Set(coaches.map(coach => coach.subject)).size}
+          </div>
+          <div className="text-sm text-gray-600">Subjects Covered</div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <CoachFilter />
 
       {/* Coach Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Coaches</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-2">Name</th>
-                  <th className="text-left py-2">Email</th>
-                  <th className="text-left py-2">Subject</th>
-                  <th className="text-left py-2">Assigned Courses</th>
-                  <th className="text-left py-2">Total Students</th>
-                  <th className="text-left py-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {/* Coach rows will go here */}
-              </tbody>
-            </table>
+      <div className="bg-white rounded-lg border">
+        {error && (
+          <div className="p-4 bg-red-50 border-b border-red-200">
+            <p className="text-red-600 text-sm">{error}</p>
           </div>
-        </CardContent>
-      </Card>
+        )}
+        <CoachTable />
+      </div>
+
+      {/* Modals */}
+      <AddCoachModal />
+      <EditCoachModal />
+      <DeleteCoachModal />
     </div>
   );
 }
