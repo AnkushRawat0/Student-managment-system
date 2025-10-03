@@ -5,14 +5,30 @@ import { coachSchema } from "@/lib/validation";
 // GET all coaches with their course assignments
 export async function GET() {
   try {
-    const coaches = await prisma.user.findMany({
-      where: { role: 'COACH' },
+    const coaches = await prisma.coach.findMany({
       include: {
-        coach: true
+        user: true,
+        courseAssignments: {
+          include: {
+            course: true
+          }
+        }
       }
     });
 
-    return NextResponse.json({ coaches });
+    // Calculate total students for each coach
+    const coachesWithStats = coaches.map((coach: any) => {
+      // For now, set totalStudents to the number of course assignments
+      // This can be improved later when the course-student relationship is refined
+      const totalStudents = coach.courseAssignments?.length || 0;
+
+      return {
+        ...coach,
+        totalStudents
+      };
+    });
+
+    return NextResponse.json({ coaches: coachesWithStats });
   } catch (error) {
     console.error("Error fetching coaches:", error);
     return NextResponse.json(
