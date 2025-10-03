@@ -46,7 +46,7 @@ export default function CoursesPage() {
     if (user?.role === "ADMIN") {
       fetchCourses();
     }
-  }, [user, fetchCourses]);
+  }, [user?.role]); // Only depend on user role, not fetchCourses
 
   // Loading state while checking auth
   if (!isAuthReady || !isAuthenticated || !user) {
