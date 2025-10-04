@@ -49,7 +49,7 @@ model Course {
   id              String       @id @default(cuid())
   name            String
   description     String
-  coachId     String?
+  coachId         String?
   duration        Int
   maxStudents     Int
   currentStudents Int          @default(0)
@@ -59,10 +59,8 @@ model Course {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
     
-
-    coach Coach ?   @relation(fields: [coachId], references: [id])
-    students Student[]
-
+  coach           Coach?       @relation(fields: [coachId], references: [id])
+  students        Student[]
 
   @@map("courses")
 }
