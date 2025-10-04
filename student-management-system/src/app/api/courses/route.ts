@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const searchTerm = searchParams.get("searchTerm");
     const status = searchParams.get("status");
-    const instructor = searchParams.get("instructor");
+    const coachId = searchParams.get("coachId");
 
     // Build where clause for filtering
     const where: any = {};
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       where.OR = [
         { name: { contains: searchTerm, mode: "insensitive" } },
         { description: { contains: searchTerm, mode: "insensitive" } },
-        { instructor: { contains: searchTerm, mode: "insensitive" } },
+        { coach: { user: { name: { contains: searchTerm, mode: "insensitive" } } } },
       ];
     }
     
@@ -25,12 +25,36 @@ export async function GET(request: NextRequest) {
       where.status = status;
     }
     
-    if (instructor) {
-      where.instructor = { contains: instructor, mode: "insensitive" };
+    if (coachId) {
+      where.coachId = coachId;
     }
 
     const courses = await prisma.course.findMany({
       where,
+      include: {
+        coach: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+        students: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
 
