@@ -19,7 +19,14 @@ export async function GET (
                         name : true , 
                         email : true
                     } 
-                }
+                },
+                course: {
+                    select: {
+                        id: true,
+                        name: true,
+                        description: true,
+                    },
+                },
             }
         });
         if (!student){
@@ -60,7 +67,7 @@ export async function PUT(
         
         // Update student information if provided
         if (validatedData.age) updateStudentData.age = validatedData.age;
-        if (validatedData.course) updateStudentData.course = validatedData.course;
+        if (validatedData.courseId) updateStudentData.courseId = validatedData.courseId;
 
           // First, get the student to find the user ID
     const student = await prisma.student.findUnique({
@@ -96,7 +103,14 @@ export async function PUT(
               name: true,
               email: true,
             }
-          }
+          },
+          course: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+            },
+          },
         }
       });
     } else {
@@ -110,7 +124,14 @@ export async function PUT(
               name: true,
               email: true,
             }
-          }
+          },
+          course: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+            },
+          },
         }
       });
     }

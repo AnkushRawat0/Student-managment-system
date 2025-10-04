@@ -4,15 +4,22 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   try {
     const students = await prisma.student.findMany({
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
+     include: {
+  user: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  },
+  course: {
+    select: {
+      id: true,
+      name: true,
+      description: true,
+    },
+  },
+},
       orderBy: {
         enrollmentDate: "desc",
       },
@@ -31,7 +38,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, age, course } = await request.json();
+    const { name, email, age, courseId } = await request.json();
 
     //create user first then create a student
     const user = await prisma.user.create({
@@ -47,7 +54,7 @@ export async function POST(request: NextRequest) {
       data: {
         userId: user.id,
         age: parseInt(age),
-        course,
+        courseId,
       },
       include: {
         user: {
@@ -55,6 +62,13 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             email: true,
+          },
+        },
+        course: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
           },
         },
       },
