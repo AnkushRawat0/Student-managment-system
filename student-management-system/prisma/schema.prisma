@@ -24,10 +24,11 @@ model User {
 model Student {
   id             String   @id @default(cuid())
   userId         String   @unique
-  age            Int
-  course         String
+  age            Int 
+  courseId        String?
   enrollmentDate DateTime @default(now())
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course? @relation(fields: [courseId], references: [id])
 
   @@map("students")
 }
@@ -37,9 +38,9 @@ model Coach {
   userId  String @unique
   subject String
   user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courses Course[]
 
 
-  courseAssignments CourseAssignment[]
 
   @@map("coach")
 }
@@ -48,7 +49,7 @@ model Course {
   id              String       @id @default(cuid())
   name            String
   description     String
-  instructor      String
+  coachId     String?
   duration        Int
   maxStudents     Int
   currentStudents Int          @default(0)
@@ -58,23 +59,16 @@ model Course {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
     
-  courseAssignments CourseAssignment[]
+
+    coach Coach ?   @relation(fields: [coachId], references: [id])
+    students Student[]
+
 
   @@map("courses")
 }
 
-model CourseAssignment {
-  id       String @id @default(cuid())
-  courseId String
-  coachId  String
-  
-  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  coach    Coach  @relation(fields: [coachId], references: [id], onDelete: Cascade)
-  
-  assignedAt DateTime @default(now())
-  
-  @@unique([courseId, coachId])
-} 
+
+
 
 enum Role {
   ADMIN
