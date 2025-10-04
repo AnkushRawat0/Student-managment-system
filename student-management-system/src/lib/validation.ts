@@ -25,10 +25,9 @@ export const studentSchema = z.object({
     .number()
     .min(16, "Age must be at least 16")
     .max(100, "Age must be less than 100"),
-  course: z
+  courseId: z
     .string()
-    .min(1, "Course is required")
-    .max(100, "Course name too long"),
+    .min(1, "Course selection is required"),
 });
 
 // Student update schema (all fields optional)
@@ -53,10 +52,9 @@ export const courseSchema = z.object({
     .string()
     .min(10, "Description must be at least 10 characters")
     .max(500, "Description must be less than 500 characters"),
-  instructor: z
+  coachId: z
     .string()
-    .min(2, "Instructor name must be at least 2 characters")
-    .max(50, "Instructor name must be less than 50 characters"),
+    .min(1, "Coach selection is required"),
   duration: z
     .number()
     .min(1, "Duration must be at least 1 week")
@@ -76,7 +74,7 @@ export const updateCourseSchema = courseSchema.partial();
 export const courseFiltersSchema = z.object({
   searchTerm: z.string().optional(),
   status: z.enum(["DRAFT", "ACTIVE", "COMPLETED", "CANCELLED"]).optional(),
-  instructor: z.string().optional(),
+  coachId: z.string().optional(),
 });
 
 // Coach validation schemas
