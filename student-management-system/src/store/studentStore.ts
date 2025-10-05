@@ -50,7 +50,7 @@ export const useStudentsStore = create<StudentsStore>()(
       error: null,
       filters: {
         searchTerm: "",
-        course: "",
+        course: "all",
         minAge: undefined,
         maxAge: undefined,
       },
@@ -155,7 +155,7 @@ export const useStudentsStore = create<StudentsStore>()(
         set({ 
           filters: { 
             searchTerm: "", 
-            course: "", 
+            course: "all", 
             minAge: undefined, 
             maxAge: undefined 
           } 
@@ -173,14 +173,15 @@ export const useStudentsStore = create<StudentsStore>()(
           filtered = filtered.filter((student) =>
             student.user.name.toLowerCase().includes(searchLower) ||
             student.user.email.toLowerCase().includes(searchLower) ||
-            student.course.toLowerCase().includes(searchLower)
+            student.course?.name.toLowerCase().includes(searchLower)
           );
         }
 
         // Course filter
-        if (filters.course) {
+        if (filters.course && filters.course !== "all") {
           filtered = filtered.filter((student) =>
-            student.course.toLowerCase() === filters.course.toLowerCase()
+            student.course?.name.toLowerCase().includes(filters.course.toLowerCase()) || 
+             student.course?.id === filters.course
           );
         }
 
