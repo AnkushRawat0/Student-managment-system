@@ -1,47 +1,76 @@
 import { loginSchmea } from "@/lib/validation";
-import {prisma }from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
 import { verifyPassword } from "@/lib/password";
+import { generateTokens } from "@/lib/jwt";
 
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const parsedData = loginSchmea.parse(body);
 
-export async function POST(request : NextRequest) {
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email: parsedData.email }
+    });
 
+    if (!user) {
+      return NextResponse.json(
+        { error: "Invalid credentials" },
+        { status: 401 }
+      );
+    }
 
-    try{
-        const body = await request.json() ;
-        const parsedData = loginSchmea.parse(body) ; 
-        
+    // ✅ SECURE: Verify password against hash
+    const isValidPassword = await verifyPassword(parsedData.password, user.password);
 
-        //find user by email
-        const user = await prisma.user.findUnique({
-            where : {email :parsedData.email}
-        });
+    if (!isValidPassword) {
+      return NextResponse.json(
+        { error: "Invalid credentials" },
+        { status: 401 }
+      );
+    }
 
-        if(!user) {
-            return NextResponse.json({error : "Invalid credentials  "},{status : 401})
-        }
+    // ✅ NEW: Generate JWT tokens
+    const tokens = generateTokens({
+      userId: user.id,
+      email: user.email,
+      role: user.role
+    });
 
-        
-        // ✅ SECURE: Verify password against hash
-        const isValidPassword = await verifyPassword(parsedData.password, user.password);
+    // ✅ FIXED: Create response object first
+    const response = NextResponse.json({
+      message: "Login successful",
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      },
+      tokens: {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        expiresIn: tokens.expiresIn // ✅ FIXED: Added missing comma
+      }
+    }, { status: 200 });
 
-        if (!isValidPassword) {
-            return NextResponse.json(
-                { error: "Invalid credentials" },
-                { status: 401 }
-            );
-        }
-        
-        //login  successful 
-        return NextResponse.json({message : "login successful" , 
-            user:{
-                id:user.id, 
-                name: user.name, 
-                email: user.email , 
-                role :user.role
-            }
-        },{status : 200})
+    // ✅ FIXED: Set tokens in HTTP-only cookies for additional security
+    response.cookies.set('accessToken', tokens.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 3600 // 1 hour
+    });
+
+    response.cookies.set('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 604800 // 7 days
+    });
+
+    return response;
 
     }
     catch(error){
