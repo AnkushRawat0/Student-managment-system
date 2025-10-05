@@ -5,8 +5,17 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useStudentsStore } from "@/store/studentStore";
 import { Student } from "@/types/student";
+
+// Course type
+interface Course {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+}
 
 interface EditStudentModalProps {
   student: Student;
@@ -19,11 +28,35 @@ export function EditStudentModal({ student, isOpen, onClose }: EditStudentModalP
     name: "",
     email: "", 
     age: "",
-    course: ""
+    courseId: ""
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(false);
   
   const { updateStudent, isLoading } = useStudentsStore();
+
+  // Fetch available courses
+  useEffect(() => {
+    const fetchCourses = async () => {
+      setLoadingCourses(true);
+      try {
+        const response = await fetch('/api/courses');
+        const data = await response.json();
+        // Only show ACTIVE courses for student enrollment
+        const activeCourses = data.courses.filter((course: Course) => course.status === 'ACTIVE');
+        setCourses(activeCourses);
+      } catch (error) {
+        console.error('Failed to fetch courses:', error);
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchCourses();
+    }
+  }, [isOpen]);
 
   // Pre-fill form when modal opens or student changes
   useEffect(() => {
@@ -32,7 +65,7 @@ export function EditStudentModal({ student, isOpen, onClose }: EditStudentModalP
         name: student.user.name,
         email: student.user.email,
         age: student.age.toString(),
-        course: student.course
+        courseId: student.courseId || ""
       });
       setErrors({});
     }
@@ -47,7 +80,7 @@ export function EditStudentModal({ student, isOpen, onClose }: EditStudentModalP
         name: formData.name,
         email: formData.email,
         age: parseInt(formData.age),
-        course: formData.course
+        courseId: formData.courseId
       });
       onClose();
     } catch (error: any) {
@@ -127,17 +160,33 @@ export function EditStudentModal({ student, isOpen, onClose }: EditStudentModalP
             </div>
 
             <div>
-              <Label htmlFor="course">Course</Label>
-              <Input
-                id="course"
-                name="course"
-                type="text"
-                value={formData.course}
-                onChange={handleChange}
-                placeholder="Course name"
+              <Label htmlFor="courseId">Course</Label>
+              <Select
+                value={formData.courseId}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, courseId: value }))}
                 disabled={isLoading}
-              />
-              {errors.course && <div className="text-red-500 text-sm">{errors.course}</div>}
+              >
+                <SelectTrigger className={errors.courseId ? "border-red-500" : ""}>
+                  <SelectValue placeholder={loadingCourses ? "Loading courses..." : "Select a course"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {courses.length === 0 && !loadingCourses ? (
+                    <SelectItem value="no-courses" disabled>
+                      No active courses available
+                    </SelectItem>
+                  ) : (
+                    courses.map((course) => (
+                      <SelectItem key={course.id} value={course.id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{course.name}</span>
+                          <span className="text-sm text-gray-500 truncate">{course.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              {errors.courseId && <div className="text-red-500 text-sm">{errors.courseId}</div>}
             </div>
 
             <div className="flex gap-2">
