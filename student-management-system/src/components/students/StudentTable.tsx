@@ -101,7 +101,7 @@ export function StudentsTable() {
                     </td>
                     <td className="py-3 px-4">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {student.course}
+                        {student.course?.name || "No Course Assigned"}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-gray-600">{student.age}</td>
