@@ -138,4 +138,6 @@ export const POST = withSecurity(async (data, request) => {
     
     return createSecureErrorResponse("Failed to create student", 500);
   }
-}, studentSchema);
+}, studentSchema, {
+  rateLimit: { windowMs: 60 * 1000, maxRequests: 10 } // 10 student creations per minute
+});

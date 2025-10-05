@@ -5,8 +5,9 @@ import { verifyPassword } from "@/lib/password";
 import { generateTokens } from "@/lib/jwt";
 import { withSecurity, createSecureResponse, createSecureErrorResponse } from "@/lib/api-middleware";
 import { encodeOutput } from "@/lib/sanitize";
+import { RATE_LIMIT_CONFIGS } from "@/lib/rate-limit";
 
-// Secure login endpoint with enhanced validation and sanitization
+// Secure login endpoint with rate limiting, validation, and sanitization
 export const POST = withSecurity(async (data: LoginInput, request: NextRequest) => {
   try {
     const { email, password } = data;
@@ -68,4 +69,6 @@ export const POST = withSecurity(async (data: LoginInput, request: NextRequest) 
     console.error("Login Error:", error);
     return createSecureErrorResponse("Authentication failed", 500);
   }
-}, loginSchema);
+}, loginSchema, {
+  rateLimit: RATE_LIMIT_CONFIGS.AUTH // 5 attempts per 15 minutes
+});

@@ -7,11 +7,18 @@
  * - Request size limits
  * - XSS protection
  * - SQL injection prevention
+ * - Rate limiting
  */
 
 import { NextRequest } from 'next/server';
 import { ZodSchema } from 'zod';
 import { validateInputSafety, detectScriptInjection } from './sanitize';
+import { 
+  checkRateLimit, 
+  createRateLimitHeaders, 
+  RateLimitConfig, 
+  RATE_LIMIT_CONFIGS 
+} from './rate-limit';
 
 // Security configuration
 const SECURITY_CONFIG = {
@@ -214,15 +221,47 @@ export function createSecureErrorResponse(
 }
 
 /**
- * Middleware wrapper for API routes with built-in security
+ * Enhanced middleware wrapper with security and rate limiting
  */
 export function withSecurity<T>(
   handler: (data: T, request: NextRequest) => Promise<Response> | Response,
-  schema: ZodSchema<T>
+  schema: ZodSchema<T>,
+  options: {
+    rateLimit?: RateLimitConfig;
+    getUserId?: (request: NextRequest) => Promise<string | null> | string | null;
+  } = {}
 ) {
   return async (request: NextRequest): Promise<Response> => {
     try {
-      // Only validate body for non-GET requests
+      // Step 1: Rate limiting check
+      if (options.rateLimit) {
+        let userId: string | null = null;
+        if (options.getUserId) {
+          userId = await options.getUserId(request);
+        }
+        
+        const rateLimitResult = checkRateLimit(request, options.rateLimit, userId || undefined);
+        
+        if (!rateLimitResult.allowed) {
+          const headers = {
+            'Content-Type': 'application/json',
+            ...createRateLimitHeaders(rateLimitResult),
+            ...getSecurityHeaders(),
+          };
+          
+          return new Response(
+            JSON.stringify({
+              error: 'Rate limit exceeded',
+              message: `Too many requests. Try again in ${rateLimitResult.retryAfter} seconds.`,
+              retryAfter: rateLimitResult.retryAfter,
+              timestamp: new Date().toISOString(),
+            }),
+            { status: 429, headers }
+          );
+        }
+      }
+
+      // Step 2: Input validation and sanitization (for non-GET requests)
       if (request.method !== 'GET') {
         const validation = await validateAndSanitizeRequest(request, schema);
         
@@ -234,10 +273,32 @@ export function withSecurity<T>(
           );
         }
 
-        return handler(validation.data!, request);
+        const response = await handler(validation.data!, request);
+        
+        // Add rate limit headers to response
+        if (options.rateLimit) {
+          const rateLimitResult = checkRateLimit(request, options.rateLimit);
+          const rateLimitHeaders = createRateLimitHeaders(rateLimitResult);
+          Object.entries(rateLimitHeaders).forEach(([key, value]) => {
+            response.headers.set(key, value);
+          });
+        }
+        
+        return response;
       } else {
         // For GET requests, just pass the request
-        return handler({} as T, request);
+        const response = await handler({} as T, request);
+        
+        // Add rate limit headers to response
+        if (options.rateLimit) {
+          const rateLimitResult = checkRateLimit(request, options.rateLimit);
+          const rateLimitHeaders = createRateLimitHeaders(rateLimitResult);
+          Object.entries(rateLimitHeaders).forEach(([key, value]) => {
+            response.headers.set(key, value);
+          });
+        }
+        
+        return response;
       }
     } catch (error) {
       console.error('API Security Error:', error);

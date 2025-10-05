@@ -1,39 +1,40 @@
-import { registerSchema } from "@/lib/validation";
+import { registerSchema, RegisterInput } from "@/lib/validation";
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
 import { hashPassword } from "@/lib/password";
+import { withSecurity, createSecureResponse, createSecureErrorResponse } from "@/lib/api-middleware";
+import { encodeOutput } from "@/lib/sanitize";
+import { RATE_LIMIT_CONFIGS } from "@/lib/rate-limit";
 
-export async function POST(request: NextRequest) {
+// Secure registration endpoint with rate limiting and enhanced security
+export const POST = withSecurity(async (data: RegisterInput, request: NextRequest) => {
   try {
-    const body = await request.json();
-    const parsedData = registerSchema.parse(body);
+    const { name, email, password, role } = data;
 
-    //hashed password before storing
-    const hashedPassword = await hashPassword(parsedData.password);
-
+    // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email: parsedData.email },
+      where: { email }
     });
+
     if (existingUser) {
-      return NextResponse.json(
-        { error: "User already exists" },
-        { status: 409 }
-      );
+      return createSecureErrorResponse("User already exists", 409);
     }
 
-    //create user with hashed password
+    // Hash password before storing
+    const hashedPassword = await hashPassword(password);
+
+    // Create user with hashed password (name and email already sanitized by validation)
     const newUser = await prisma.user.create({
       data: {
-        name: parsedData.name,
-        email: parsedData.email,
+        name,
+        email,
         password: hashedPassword,
-        role: parsedData.role,
+        role,
       },
     });
 
     // If registering as a student, create student record too
-    if (parsedData.role === "STUDENT") {
+    if (role === "STUDENT") {
       await prisma.student.create({
         data: {
           userId: newUser.id,
@@ -43,32 +44,32 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json(
-      {
-        message: "user successfully registered",
-        user: {
-          id: newUser.id,
-          name: newUser.name,
-          email: newUser.email,
-          role: newUser.role,
-        },
-      },
-      { status: 201 }
-    );
+    // Sanitize output data to prevent XSS
+    const sanitizedUser = {
+      id: newUser.id,
+      name: encodeOutput(newUser.name),
+      email: encodeOutput(newUser.email),
+      role: newUser.role,
+    };
+
+    return createSecureResponse({
+      message: "User successfully registered",
+      user: sanitizedUser,
+    }, 201);
+
   } catch (error) {
     console.error("Registration error:", error);
-
-    // Better error handling
-    if (error instanceof Error) {
-      // Zod validation errors
-      return NextResponse.json(
-        { error: "Invalid input data", details: error.message },
-        { status: 400 }
-      );
+    
+    // Check for specific Prisma errors
+    if (error instanceof Error && error.message.includes('Unique constraint')) {
+      return createSecureErrorResponse("Email already exists", 409);
     }
-    return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500 }
-    );
+    
+    return createSecureErrorResponse("Registration failed", 500);
   }
-}
+}, registerSchema, {
+  rateLimit: {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    maxRequests: 3,            // Only 3 registrations per 15 minutes per IP
+  }
+});
