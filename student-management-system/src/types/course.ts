@@ -2,7 +2,7 @@ export interface Course {
   id: string;
   name: string;
   description: string;
-  instructor: string;
+  coachId: string | null;
   duration: number; // in weeks
   maxStudents: number;
   currentStudents: number;
@@ -11,6 +11,24 @@ export interface Course {
   status: CourseStatus;
   createdAt: Date;
   updatedAt: Date;
+  coach?: {
+    id: string;
+    subject: string;
+    user: {
+      id: string;
+      name: string;
+      email: string;
+    };
+  } | null;
+  students?: {
+    id: string;
+    age: number;
+    user: {
+      id: string;
+      name: string;
+      email: string;
+    };
+  }[];
 }
 
 export enum CourseStatus {
@@ -23,7 +41,7 @@ export enum CourseStatus {
 export interface CourseFormData {
   name: string;
   description: string;
-  instructor: string;
+  coachId: string;
   duration: number;
   maxStudents: number;
   startDate: Date;

@@ -3,13 +3,18 @@ export interface Student {
   id: string;
   userId: string;
   age: number;
-  course: string;
+  courseId: string | null;
   enrollmentDate: string;
   user: {
     id: string;
     name: string;
     email: string;
   };
+  course?: {
+    id: string;
+    name: string;
+    description: string;
+  } | null;
 }
 
 // Form data for creating/updating students
@@ -17,7 +22,7 @@ export interface StudentFormData {
   name: string;
   email: string;
   age: number;
-  course: string;
+  courseId: string;
 }
 
 // API response types
