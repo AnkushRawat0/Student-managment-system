@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,19 +9,52 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCoursesStore } from "@/store/courseStore";
 import { CourseStatus } from "@/types/course";
 
+// Coach type
+interface Coach {
+  id: string;
+  subject: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
 export function AddCourseModal() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    instructor: "",
+    coachId: "",
     duration: "",
     maxStudents: "",
     startDate: "",
     status: CourseStatus.DRAFT
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [coaches, setCoaches] = useState<Coach[]>([]);
+  const [loadingCoaches, setLoadingCoaches] = useState(false);
   
   const { createCourse, isLoading, showAddModal, setShowAddModal } = useCoursesStore();
+
+  // Fetch available coaches
+  useEffect(() => {
+    const fetchCoaches = async () => {
+      setLoadingCoaches(true);
+      try {
+        const response = await fetch('/api/coaches');
+        const data = await response.json();
+        setCoaches(data.coaches || []);
+      } catch (error) {
+        console.error('Failed to fetch coaches:', error);
+      } finally {
+        setLoadingCoaches(false);
+      }
+    };
+
+    if (showAddModal) {
+      fetchCoaches();
+    }
+  }, [showAddModal]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +64,7 @@ export function AddCourseModal() {
       await createCourse({
         name: formData.name,
         description: formData.description,
-        instructor: formData.instructor,
+        coachId: formData.coachId,
         duration: parseInt(formData.duration),
         maxStudents: parseInt(formData.maxStudents),
         startDate: new Date(formData.startDate),
@@ -42,7 +75,7 @@ export function AddCourseModal() {
       setFormData({
         name: "",
         description: "",
-        instructor: "",
+        coachId: "",
         duration: "",
         maxStudents: "",
         startDate: "",
@@ -100,19 +133,35 @@ export function AddCourseModal() {
                 {errors.name && <div className="text-red-500 text-sm">{errors.name}</div>}
               </div>
 
-              {/* Instructor */}
+              {/* Coach */}
               <div>
-                <Label htmlFor="instructor">Instructor</Label>
-                <Input
-                  id="instructor"
-                  name="instructor"
-                  type="text"
-                  value={formData.instructor}
-                  onChange={handleChange}
-                  placeholder="Instructor name"
+                <Label htmlFor="coachId">Assign Coach</Label>
+                <Select
+                  value={formData.coachId}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, coachId: value }))}
                   disabled={isLoading}
-                />
-                {errors.instructor && <div className="text-red-500 text-sm">{errors.instructor}</div>}
+                >
+                  <SelectTrigger className={errors.coachId ? "border-red-500" : ""}>
+                    <SelectValue placeholder={loadingCoaches ? "Loading coaches..." : "Select a coach"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {coaches.length === 0 && !loadingCoaches ? (
+                      <SelectItem value="no-coaches" disabled>
+                        No coaches available
+                      </SelectItem>
+                    ) : (
+                      coaches.map((coach) => (
+                        <SelectItem key={coach.id} value={coach.id}>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{coach.user.name}</span>
+                            <span className="text-sm text-gray-500">{coach.subject}</span>
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                {errors.coachId && <div className="text-red-500 text-sm">{errors.coachId}</div>}
               </div>
             </div>
 

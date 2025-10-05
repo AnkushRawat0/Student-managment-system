@@ -9,6 +9,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCoursesStore } from "@/store/courseStore";
 import { Course, CourseStatus } from "@/types/course";
 
+// Coach type
+interface Coach {
+  id: string;
+  subject: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
 interface EditCourseModalProps {
   course: Course;
   isOpen: boolean;
@@ -19,15 +30,37 @@ export function EditCourseModal({ course, isOpen, onClose }: EditCourseModalProp
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    instructor: "",
+    coachId: "",
     duration: "",
     maxStudents: "",
     startDate: "",
     status: CourseStatus.DRAFT
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [coaches, setCoaches] = useState<Coach[]>([]);
+  const [loadingCoaches, setLoadingCoaches] = useState(false);
   
   const { updateCourse, isLoading } = useCoursesStore();
+
+  // Fetch available coaches
+  useEffect(() => {
+    const fetchCoaches = async () => {
+      setLoadingCoaches(true);
+      try {
+        const response = await fetch('/api/coaches');
+        const data = await response.json();
+        setCoaches(data.coaches || []);
+      } catch (error) {
+        console.error('Failed to fetch coaches:', error);
+      } finally {
+        setLoadingCoaches(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchCoaches();
+    }
+  }, [isOpen]);
 
   // Pre-fill form when modal opens or course changes
   useEffect(() => {
@@ -35,7 +68,7 @@ export function EditCourseModal({ course, isOpen, onClose }: EditCourseModalProp
       setFormData({
         name: course.name,
         description: course.description,
-        instructor: course.instructor,
+        coachId: course.coachId || "",
         duration: course.duration.toString(),
         maxStudents: course.maxStudents.toString(),
         startDate: new Date(course.startDate).toISOString().split('T')[0], // Format for date input
@@ -53,7 +86,7 @@ export function EditCourseModal({ course, isOpen, onClose }: EditCourseModalProp
       await updateCourse(course.id, {
         name: formData.name,
         description: formData.description,
-        instructor: formData.instructor,
+        coachId: formData.coachId,
         duration: parseInt(formData.duration),
         maxStudents: parseInt(formData.maxStudents),
         startDate: new Date(formData.startDate),
@@ -119,7 +152,7 @@ export function EditCourseModal({ course, isOpen, onClose }: EditCourseModalProp
                   id="instructor"
                   name="instructor"
                   type="text"
-                  value={formData.instructor}
+                  value={formData.coachId}
                   onChange={handleChange}
                   placeholder="Instructor name"
                   disabled={isLoading}
