@@ -44,7 +44,7 @@ export function DeleteStudentDialog({ student, isOpen, onClose }: DeleteStudentD
             <div className="mt-3 p-3 bg-gray-50 rounded-lg">
               <p className="font-medium text-gray-900">{student.user.name}</p>
               <p className="text-sm text-gray-600">{student.user.email}</p>
-              <p className="text-sm text-gray-600">Course: {student.course}</p>
+              <p className="text-sm text-gray-600">Course: {student.course?.name || "No courses assigned"}</p>
             </div>
             <p className="mt-3 text-sm text-red-600">
               <strong>Warning:</strong> This action cannot be undone. The student's account and all associated data will be permanently removed.
