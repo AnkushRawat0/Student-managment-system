@@ -91,6 +91,15 @@ export const coachSchema = z.object({
     .max(100, "Subject name must be less than 100 characters"),
 });
 
+// Coach assignment schema (for assigning existing users to coach roles)
+export const coachAssignmentSchema = z.object({
+  userId: z.string().min(1, "User selection is required"),
+  subject: z
+    .string()
+    .min(2, "Subject must be at least 2 characters")
+    .max(100, "Subject name must be less than 100 characters"),
+});
+
 // Coach update schema (all fields optional except password which should be handled separately)
 export const updateCoachSchema = z.object({
   name: z
@@ -133,4 +142,5 @@ export type CoachInput = z.infer<typeof coachSchema>;
 export type CoachFormData = z.infer<typeof coachSchema>;
 export type UpdateCoachData = z.infer<typeof updateCoachSchema>;
 export type CoachFiltersData = z.infer<typeof coachFiltersSchema>;
+export type CoachAssignmentData = z.infer<typeof coachAssignmentSchema>;
 export type CourseAssignmentData = z.infer<typeof courseAssignmentSchema>;
