@@ -1,5 +1,4 @@
 import { registerSchema } from "@/lib/validation";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
@@ -35,7 +34,7 @@ export async function POST(request: NextRequest) {
                 data: {
                     userId: newUser.id,
                     age: 22, // Default age - we'll make this configurable later
-                    course: 'Web Development', // Default course - we'll make this configurable later
+                    courseId: 'Web Development', // Default course - we'll make this configurable later
                 },
             });
         }

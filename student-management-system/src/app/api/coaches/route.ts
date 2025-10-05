@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { coachSchema } from "@/lib/validation";
+import { coachSchema, coachAssignmentSchema } from "@/lib/validation";
 
-// GET all coaches with their course assignments
+// GET all coaches with their assigned courses
 export async function GET() {
   try {
     const coaches = await prisma.coach.findMany({
       include: {
         user: true,
-        courseAssignments: {
+        courses: {
           include: {
-            course: true
+            students: true
           }
         }
       }
@@ -18,9 +18,10 @@ export async function GET() {
 
     // Calculate total students for each coach
     const coachesWithStats = coaches.map((coach: any) => {
-      // For now, set totalStudents to the number of course assignments
-      // This can be improved later when the course-student relationship is refined
-      const totalStudents = coach.courseAssignments?.length || 0;
+      // Calculate total students across all courses assigned to this coach
+      const totalStudents = coach.courses?.reduce((total: number, course: any) => {
+        return total + (course.students?.length || 0);
+      }, 0) || 0;
 
       return {
         ...coach,
@@ -38,56 +39,60 @@ export async function GET() {
   }
 }
 
-// POST - Create new coach
+// POST - Assign coach specialization to existing user
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const validatedData = coachSchema.parse(body);
-    const { name, email, password, subject } = validatedData;
+    const validatedData = coachAssignmentSchema.parse(body);
+    const { userId, subject } = validatedData;
 
-    // Check if user already exists
+    // Check if user exists and has COACH role
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { id: userId }
     });
 
-    if (existingUser) {
+    if (!existingUser) {
       return NextResponse.json(
-        { error: "User with this email already exists" },
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    if (existingUser.role !== 'COACH') {
+      return NextResponse.json(
+        { error: "User must have COACH role" },
+        { status: 400 }
+      );
+    }
+
+    // Check if user already has a coach profile
+    const existingCoach = await prisma.coach.findUnique({
+      where: { userId }
+    });
+
+    if (existingCoach) {
+      return NextResponse.json(
+        { error: "User already has a coach specialization assigned" },
         { status: 409 }
       );
     }
 
-    // Create user and coach in transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // Create user
-      const user = await tx.user.create({
-        data: {
-          name,
-          email,
-          password, // In production, hash this password
-          role: 'COACH'
-        }
-      });
-
-      // Create coach profile
-      const coach = await tx.coach.create({
-        data: {
-          userId: user.id,
-          subject
-        },
-        include: {
-          user: true
-        }
-      });
-
-      return coach;
+    // Create coach profile for the existing user
+    const coach = await prisma.coach.create({
+      data: {
+        userId,
+        subject
+      },
+      include: {
+        user: true
+      }
     });
 
-    return NextResponse.json({ coach: result });
+    return NextResponse.json({ coach });
   } catch (error) {
-    console.error("Error creating coach:", error);
+    console.error("Error assigning coach specialization:", error);
     return NextResponse.json(
-      { error: "Failed to create coach" },
+      { error: "Failed to assign coach specialization" },
       { status: 500 }
     );
   }

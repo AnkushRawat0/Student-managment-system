@@ -10,14 +10,13 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
     const coachId = searchParams.get("coachId");
 
-    // Build where clause for filtering
+    // Build where clause for filtering - simplified to avoid relation issues
     const where: any = {};
     
     if (searchTerm) {
       where.OR = [
         { name: { contains: searchTerm, mode: "insensitive" } },
         { description: { contains: searchTerm, mode: "insensitive" } },
-        { coach: { user: { name: { contains: searchTerm, mode: "insensitive" } } } },
       ];
     }
     
@@ -43,15 +42,9 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        students: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-              },
-            },
+        _count: {
+          select: {
+            students: true,
           },
         },
       },
