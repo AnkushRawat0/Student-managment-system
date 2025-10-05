@@ -1,38 +1,71 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Plus, User, Mail, Lock, BookOpen } from "lucide-react";
+import { X, Plus, User, BookOpen } from "lucide-react";
 import { useCoachStore } from "@/store/coachStore";
-import { CoachFormData } from "@/lib/validation";
+
+// User interface for coach users
+interface CoachUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+// Form data for assigning coach specialization
+interface CoachAssignmentData {
+  userId: string;
+  subject: string;
+}
 
 export function AddCoachModal() {
   const { isAddModalOpen, setAddModalOpen, addCoach, loading, error } = useCoachStore();
   
-  const [formData, setFormData] = useState<CoachFormData>({
-    name: '',
-    email: '',
-    password: '',
+  const [formData, setFormData] = useState<CoachAssignmentData>({
+    userId: '',
     subject: ''
   });
   
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+  const [coachUsers, setCoachUsers] = useState<CoachUser[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+
+  // Fetch users with COACH role who don't have coach assignments yet
+  useEffect(() => {
+    const fetchCoachUsers = async () => {
+      if (!isAddModalOpen) return;
+      
+      setLoadingUsers(true);
+      try {
+        const response = await fetch('/api/users/coach-users');
+        const data = await response.json();
+        setCoachUsers(data.users || []);
+      } catch (error) {
+        console.error('Failed to fetch coach users:', error);
+      } finally {
+        setLoadingUsers(false);
+      }
+    };
+
+    fetchCoachUsers();
+  }, [isAddModalOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormErrors({});
     
     try {
-      await addCoach(formData);
+      await addCoach({
+        userId: formData.userId,
+        subject: formData.subject
+      });
       // Reset form on success
       setFormData({
-        name: '',
-        email: '',
-        password: '',
+        userId: '',
         subject: ''
       });
     } catch (error: any) {
@@ -45,9 +78,7 @@ export function AddCoachModal() {
   const handleClose = () => {
     setAddModalOpen(false);
     setFormData({
-      name: '',
-      email: '',
-      password: '',
+      userId: '',
       subject: ''
     });
     setFormErrors({});
@@ -84,60 +115,38 @@ export function AddCoachModal() {
               </div>
             )}
 
-            {/* Name Field */}
+            {/* Select User Field */}
             <div className="space-y-2">
-              <Label htmlFor="name" className="flex items-center gap-2">
+              <Label htmlFor="userId" className="flex items-center gap-2">
                 <User className="h-4 w-4" />
-                Full Name
+                Select Coach User
               </Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Enter coach's full name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className={formErrors.name ? "border-red-500" : ""}
-              />
-              {formErrors.name && (
-                <p className="text-sm text-red-600">{formErrors.name}</p>
-              )}
-            </div>
-
-            {/* Email Field */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                Email Address
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="coach@example.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className={formErrors.email ? "border-red-500" : ""}
-              />
-              {formErrors.email && (
-                <p className="text-sm text-red-600">{formErrors.email}</p>
-              )}
-            </div>
-
-            {/* Password Field */}
-            <div className="space-y-2">
-              <Label htmlFor="password" className="flex items-center gap-2">
-                <Lock className="h-4 w-4" />
-                Password
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter password (min 6 characters)"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className={formErrors.password ? "border-red-500" : ""}
-              />
-              {formErrors.password && (
-                <p className="text-sm text-red-600">{formErrors.password}</p>
+              <Select
+                value={formData.userId}
+                onValueChange={(value) => setFormData({ ...formData, userId: value })}
+              >
+                <SelectTrigger className={formErrors.userId ? "border-red-500" : ""}>
+                  <SelectValue placeholder={loadingUsers ? "Loading users..." : "Select a user with coach role"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {coachUsers.length === 0 && !loadingUsers ? (
+                    <SelectItem value="no-users" disabled>
+                      No coach users available
+                    </SelectItem>
+                  ) : (
+                    coachUsers.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{user.name}</span>
+                          <span className="text-sm text-gray-500">{user.email}</span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              {formErrors.userId && (
+                <p className="text-sm text-red-600">{formErrors.userId}</p>
               )}
             </div>
 
@@ -155,18 +164,16 @@ export function AddCoachModal() {
                   <SelectValue placeholder="Select subject" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Mathematics">Mathematics</SelectItem>
-                  <SelectItem value="Science">Science</SelectItem>
-                  <SelectItem value="English">English</SelectItem>
-                  <SelectItem value="History">History</SelectItem>
-                  <SelectItem value="Geography">Geography</SelectItem>
-                  <SelectItem value="Physics">Physics</SelectItem>
-                  <SelectItem value="Chemistry">Chemistry</SelectItem>
-                  <SelectItem value="Biology">Biology</SelectItem>
-                  <SelectItem value="Computer Science">Computer Science</SelectItem>
-                  <SelectItem value="Physical Education">Physical Education</SelectItem>
-                  <SelectItem value="Art">Art</SelectItem>
-                  <SelectItem value="Music">Music</SelectItem>
+                  <SelectItem value="Frontend Developer">Frontend Developer</SelectItem>
+                  <SelectItem value="Backend Developer">Backend Developer</SelectItem>
+                  <SelectItem value="DevOps Engineer">DevOps Engineer</SelectItem>
+                  <SelectItem value="Full Stack Developer">Full Stack Developer</SelectItem>
+                  <SelectItem value="Python Developer">Python Developer</SelectItem>
+                  <SelectItem value="Java Developer">Java Developer</SelectItem>
+                  <SelectItem value="Data Science">Data Science</SelectItem>
+                  <SelectItem value="AI/ML">AI/ML</SelectItem>
+                  <SelectItem value="Data Analyst">Data Analyst</SelectItem>
+                  <SelectItem value="DSA Only">DSA Only</SelectItem>
                 </SelectContent>
               </Select>
               {formErrors.subject && (

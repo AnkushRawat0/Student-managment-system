@@ -156,18 +156,16 @@ export function EditCoachModal() {
                   <SelectValue placeholder="Select subject" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Mathematics">Mathematics</SelectItem>
-                  <SelectItem value="Science">Science</SelectItem>
-                  <SelectItem value="English">English</SelectItem>
-                  <SelectItem value="History">History</SelectItem>
-                  <SelectItem value="Geography">Geography</SelectItem>
-                  <SelectItem value="Physics">Physics</SelectItem>
-                  <SelectItem value="Chemistry">Chemistry</SelectItem>
-                  <SelectItem value="Biology">Biology</SelectItem>
-                  <SelectItem value="Computer Science">Computer Science</SelectItem>
-                  <SelectItem value="Physical Education">Physical Education</SelectItem>
-                  <SelectItem value="Art">Art</SelectItem>
-                  <SelectItem value="Music">Music</SelectItem>
+                  <SelectItem value="Frontend Developer">Frontend Developer</SelectItem>
+                  <SelectItem value="Backend Developer">Backend Developer</SelectItem>
+                  <SelectItem value="DevOps Engineer">DevOps Engineer</SelectItem>
+                  <SelectItem value="Full Stack Developer">Full Stack Developer</SelectItem>
+                  <SelectItem value="Python Developer">Python Developer</SelectItem>
+                  <SelectItem value="Java Developer">Java Developer</SelectItem>
+                  <SelectItem value="Data Science">Data Science</SelectItem>
+                  <SelectItem value="AI/ML">AI/ML</SelectItem>
+                  <SelectItem value="Data Analyst">Data Analyst</SelectItem>
+                  <SelectItem value="DSA Only">DSA Only</SelectItem>
                 </SelectContent>
               </Select>
               {formErrors.subject && (
