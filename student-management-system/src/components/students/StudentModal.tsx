@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useStudentsStore } from "@/store/studentStore";
 import { StudentFormData } from "@/types/student";
 
@@ -13,7 +14,15 @@ interface FormErrors {
   name?: string;
   email?: string;
   age?: string;
-  course?: string;
+  courseId?: string;
+}
+
+// Course type
+interface Course {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
 }
 
 export function AddStudentModal() {
@@ -29,10 +38,34 @@ export function AddStudentModal() {
     name: "",
     email: "",
     age: 0,
-    course: "",
+    courseId: "",
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(false);
+
+  // Fetch available courses
+  useEffect(() => {
+    const fetchCourses = async () => {
+      setLoadingCourses(true);
+      try {
+        const response = await fetch('/api/courses');
+        const data = await response.json();
+        // Only show ACTIVE courses for student enrollment
+        const activeCourses = data.courses.filter((course: Course) => course.status === 'ACTIVE');
+        setCourses(activeCourses);
+      } catch (error) {
+        console.error('Failed to fetch courses:', error);
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+
+    if (showAddModal) {
+      fetchCourses();
+    }
+  }, [showAddModal]);
 
   const handleInputChange = (field: keyof StudentFormData, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -47,7 +80,7 @@ export function AddStudentModal() {
 
     if (!formData.name.trim()) newErrors.name = "Name is required";
     if (!formData.email.trim()) newErrors.email = "Email is required";
-    if (!formData.course.trim()) newErrors.course = "Course is required";
+    if (!formData.courseId.trim()) newErrors.courseId = "Course selection is required";
     if (formData.age < 16) newErrors.age = "Age must be at least 16";
 
     setErrors(newErrors);
@@ -61,14 +94,14 @@ export function AddStudentModal() {
     
     // Reset form if successful (no error)
     if (!error) {
-      setFormData({ name: "", email: "", age: 0, course: "" });
+      setFormData({ name: "", email: "", age: 0, courseId: "" });
       setErrors({});
     }
   };
 
   const handleCancel = () => {
     setShowAddModal(false);
-    setFormData({ name: "", email: "", age: 0, course: "" });
+    setFormData({ name: "", email: "", age: 0, courseId: "" });
     setErrors({});
   };
 
@@ -130,16 +163,32 @@ export function AddStudentModal() {
             </div>
 
             <div>
-              <Label htmlFor="course">Course *</Label>
-              <Input
-                id="course"
-                type="text"
-                value={formData.course}
-                onChange={(e) => handleInputChange("course", e.target.value)}
-                placeholder="e.g., Web Development, Data Science"
-                className={errors.course ? "border-red-500" : ""}
-              />
-              {errors.course && <p className="text-red-500 text-xs mt-1">{errors.course}</p>}
+              <Label htmlFor="courseId">Course *</Label>
+              <Select
+                value={formData.courseId}
+                onValueChange={(value) => handleInputChange("courseId", value)}
+              >
+                <SelectTrigger className={errors.courseId ? "border-red-500" : ""}>
+                  <SelectValue placeholder={loadingCourses ? "Loading courses..." : "Select a course"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {courses.length === 0 && !loadingCourses ? (
+                    <SelectItem value="no-courses" disabled>
+                      No active courses available
+                    </SelectItem>
+                  ) : (
+                    courses.map((course) => (
+                      <SelectItem key={course.id} value={course.id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{course.name}</span>
+                          <span className="text-sm text-gray-500 truncate">{course.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              {errors.courseId && <p className="text-red-500 text-xs mt-1">{errors.courseId}</p>}
             </div>
 
             <div className="flex gap-2 pt-4">
