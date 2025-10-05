@@ -1,92 +1,71 @@
-import { loginSchmea } from "@/lib/validation";
+import { loginSchema, LoginInput } from "@/lib/validation";
 import { prisma } from "@/lib/prisma";
-import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
 import { verifyPassword } from "@/lib/password";
 import { generateTokens } from "@/lib/jwt";
+import { withSecurity, createSecureResponse, createSecureErrorResponse } from "@/lib/api-middleware";
+import { encodeOutput } from "@/lib/sanitize";
 
-export async function POST(request: NextRequest) {
+// Secure login endpoint with enhanced validation and sanitization
+export const POST = withSecurity(async (data: LoginInput, request: NextRequest) => {
   try {
-    const body = await request.json();
-    const parsedData = loginSchmea.parse(body);
+    const { email, password } = data;
 
-    // Find user by email
+    // Find user by email (email is already sanitized by validation schema)
     const user = await prisma.user.findUnique({
-      where: { email: parsedData.email }
+      where: { email }
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
-      );
+      // ⚠️ Security: Use generic error message to prevent user enumeration
+      return createSecureErrorResponse("Invalid credentials", 401);
     }
 
     // ✅ SECURE: Verify password against hash
-    const isValidPassword = await verifyPassword(parsedData.password, user.password);
+    const isValidPassword = await verifyPassword(password, user.password);
 
     if (!isValidPassword) {
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
-      );
+      return createSecureErrorResponse("Invalid credentials", 401);
     }
 
-    // ✅ NEW: Generate JWT tokens
+    // ✅ Generate JWT tokens
     const tokens = generateTokens({
       userId: user.id,
       email: user.email,
       role: user.role
     });
 
-    // ✅ FIXED: Create response object first
-    const response = NextResponse.json({
+    // ✅ SECURE: Sanitize output data to prevent XSS
+    const sanitizedUser = {
+      id: user.id,
+      name: encodeOutput(user.name),
+      email: encodeOutput(user.email),
+      role: user.role
+    };
+
+    // Create secure response with tokens
+    const responseData = {
       message: "Login successful",
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      },
+      user: sanitizedUser,
       tokens: {
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
-        expiresIn: tokens.expiresIn // ✅ FIXED: Added missing comma
+        expiresIn: tokens.expiresIn
       }
-    }, { status: 200 });
+    };
 
-    // ✅ FIXED: Set tokens in HTTP-only cookies for additional security
-    response.cookies.set('accessToken', tokens.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 3600 // 1 hour
-    });
-
-    response.cookies.set('refreshToken', tokens.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 604800 // 7 days
+    // Create response with security headers
+    const response = createSecureResponse(responseData, 200, {
+      'Set-Cookie': [
+        `accessToken=${tokens.accessToken}; HttpOnly; Secure=${process.env.NODE_ENV === 'production'}; SameSite=Strict; Max-Age=3600; Path=/`,
+        `refreshToken=${tokens.refreshToken}; HttpOnly; Secure=${process.env.NODE_ENV === 'production'}; SameSite=Strict; Max-Age=604800; Path=/`
+      ].join(', ')
     });
 
     return response;
 
-    }
-    catch(error){
-        console.error("Login Error:", error);
-        
-        if (error instanceof Error) {
-            return NextResponse.json(
-                { error: "Invalid input data", details: error.message },
-                { status: 400 }
-            );
-        }
-
-        return NextResponse.json(
-            { error: "Something went wrong" },
-            { status: 500 }
-        );
-        
- }
-}
+  } catch (error) {
+    console.error("Login Error:", error);
+    return createSecureErrorResponse("Authentication failed", 500);
+  }
+}, loginSchema);

@@ -1,26 +1,45 @@
 import { z } from "zod";
+import { sanitizeName, sanitizeEmail, sanitizeText } from "./sanitize";
+
+// Enhanced string validation with sanitization
+const createSanitizedStringSchema = (
+  sanitizer: (input: string) => string,
+  minLength: number = 1,
+  maxLength: number = 255,
+  fieldName: string = "Field"
+) =>
+  z
+    .string()
+    .trim()
+    .min(minLength, `${fieldName} must be at least ${minLength} characters`)
+    .max(maxLength, `${fieldName} must be less than ${maxLength} characters`)
+    .transform(sanitizer);
+
+// Enhanced email validation with sanitization
+const emailSchema = z
+  .string()
+  .trim()
+  .email("Invalid email format")
+  .toLowerCase()
+  .transform(sanitizeEmail);
 
 //user validation schema
-export const loginSchmea = z.object({
-  email: z.string().email("invalid email address"),
+export const loginSchema = z.object({
+  email: emailSchema,
   password: z.string().min(6, "password must be at least 6 characters"),
 });
 
 export const registerSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
+  name: createSanitizedStringSchema(sanitizeName, 2, 50, "Name"),
+  email: emailSchema,
   password: z.string().min(6, "Password must be at least 6 characters"),
   role: z.enum(["ADMIN", "COACH", "STUDENT"]),
 });
 
 //student validation schema
-
 export const studentSchema = z.object({
-  name: z
-    .string()
-    .min(2, "Name must be at least 2 characters")
-    .max(50, "Name must be less than 50 characters"),
-  email: z.string().email("Invalid email format").toLowerCase(),
+  name: createSanitizedStringSchema(sanitizeName, 2, 50, "Name"),
+  email: emailSchema,
   age: z
     .number()
     .min(16, "Age must be at least 16")
@@ -36,7 +55,7 @@ export const updateStudentSchema = studentSchema.partial();
 
 // Search and filter schema
 export const studentFiltersSchema = z.object({
-  searchTerm: z.string().optional(),
+  searchTerm: z.string().transform((input) => sanitizeText(input)).optional(),
   course: z.string().optional(),
   minAge: z.number().min(0).optional(),
   maxAge: z.number().max(150).optional(),
@@ -44,14 +63,8 @@ export const studentFiltersSchema = z.object({
 
 // Course validation schemas
 export const courseSchema = z.object({
-  name: z
-    .string()
-    .min(2, "Course name must be at least 2 characters")
-    .max(100, "Course name must be less than 100 characters"),
-  description: z
-    .string()
-    .min(10, "Description must be at least 10 characters")
-    .max(500, "Description must be less than 500 characters"),
+  name: createSanitizedStringSchema(sanitizeText, 2, 100, "Course name"),
+  description: createSanitizedStringSchema(sanitizeText, 10, 500, "Description"),
   coachId: z
     .string()
     .min(1, "Coach selection is required"),
@@ -72,53 +85,36 @@ export const updateCourseSchema = courseSchema.partial();
 
 // Course filters schema
 export const courseFiltersSchema = z.object({
-  searchTerm: z.string().optional(),
+  searchTerm: z.string().transform((input) => sanitizeText(input)).optional(),
   status: z.enum(["DRAFT", "ACTIVE", "COMPLETED", "CANCELLED"]).optional(),
   coachId: z.string().optional(),
 });
 
 // Coach validation schemas
 export const coachSchema = z.object({
-  name: z
-    .string()
-    .min(2, "Name must be at least 2 characters")
-    .max(50, "Name must be less than 50 characters"),
-  email: z.string().email("Invalid email format").toLowerCase(),
+  name: createSanitizedStringSchema(sanitizeName, 2, 50, "Name"),
+  email: emailSchema,
   password: z.string().min(6, "Password must be at least 6 characters"),
-  subject: z
-    .string()
-    .min(2, "Subject must be at least 2 characters")
-    .max(100, "Subject name must be less than 100 characters"),
+  subject: createSanitizedStringSchema(sanitizeText, 2, 100, "Subject"),
 });
 
 // Coach assignment schema (for assigning existing users to coach roles)
 export const coachAssignmentSchema = z.object({
   userId: z.string().min(1, "User selection is required"),
-  subject: z
-    .string()
-    .min(2, "Subject must be at least 2 characters")
-    .max(100, "Subject name must be less than 100 characters"),
+  subject: createSanitizedStringSchema(sanitizeText, 2, 100, "Subject"),
 });
 
 // Coach update schema (all fields optional except password which should be handled separately)
 export const updateCoachSchema = z.object({
-  name: z
-    .string()
-    .min(2, "Name must be at least 2 characters")
-    .max(50, "Name must be less than 50 characters")
-    .optional(),
-  email: z.string().email("Invalid email format").toLowerCase().optional(),
-  subject: z
-    .string()
-    .min(2, "Subject must be at least 2 characters")
-    .max(100, "Subject name must be less than 100 characters")
-    .optional(),
+  name: createSanitizedStringSchema(sanitizeName, 2, 50, "Name").optional(),
+  email: emailSchema.optional(),
+  subject: createSanitizedStringSchema(sanitizeText, 2, 100, "Subject").optional(),
 });
 
 // Coach filters schema
 export const coachFiltersSchema = z.object({
-  searchTerm: z.string().optional(),
-  subject: z.string().optional(),
+  searchTerm: z.string().transform((input) => sanitizeText(input)).optional(),
+  subject: z.string().transform((input) => sanitizeText(input)).optional(),
 });
 
 // Course assignment schema
@@ -128,7 +124,7 @@ export const courseAssignmentSchema = z.object({
 });
 
 //export types
-export type LoginInput = z.infer<typeof loginSchmea>;
+export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type StudentInput = z.infer<typeof studentSchema>;
 export type StudentFormData = z.infer<typeof studentSchema>;

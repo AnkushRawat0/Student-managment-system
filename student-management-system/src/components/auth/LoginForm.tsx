@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchmea, type LoginInput } from "@/lib/validation";
+import { loginSchema, type LoginInput } from "@/lib/validation";
 import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ export function LoginForm() {
   const { login, isLoading } = useAuthStore();
 
   const form = useForm<LoginInput>({
-    resolver: zodResolver(loginSchmea),
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
