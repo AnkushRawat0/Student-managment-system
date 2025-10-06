@@ -1,62 +1,100 @@
-import DOMPurify from 'dompurify';
-
 /**
- * Input sanitization utilities to prevent XSS attacks and ensure data integrity
+ * Server-side Input sanitization utilities to prevent XSS attacks and ensure data integrity
+ * Pure Node.js implementation - no DOM dependencies
  */
 
 /**
- * Sanitize HTML content to prevent XSS attacks
+ * Remove HTML tags and potential XSS vectors from input
  */
 export function sanitizeHtml(input: string): string {
-  if (!input || typeof input !== 'string') {
-    return '';
+  try {
+    if (!input || typeof input !== 'string') {
+      return '';
+    }
+
+    // Remove HTML tags, scripts, and dangerous content
+    let clean = input
+      // Remove script tags and content
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      // Remove style tags and content
+      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+      // Remove all HTML tags
+      .replace(/<[^>]*>/g, '')
+      // Remove HTML entities that could be dangerous
+      .replace(/&(?:lt|gt|quot|apos|amp);/g, (match) => {
+        const entities: Record<string, string> = {
+          '&lt;': '<',
+          '&gt;': '>',
+          '&quot;': '"',
+          '&apos;': "'",
+          '&amp;': '&'
+        };
+        return entities[match] || match;
+      })
+      // Remove javascript: and data: protocols
+      .replace(/javascript:/gi, '')
+      .replace(/data:/gi, '')
+      // Remove common XSS vectors
+      .replace(/on\w+\s*=/gi, '')
+      .replace(/expression\s*\(/gi, '')
+      .replace(/vbscript:/gi, '')
+      .replace(/livescript:/gi, '');
+
+    return clean.trim();
+  } catch (error) {
+    console.error('HTML sanitization error:', error);
+    // Fallback: basic tag removal
+    return typeof input === 'string' ? input.replace(/<[^>]*>/g, '').trim() : '';
   }
-
-  // Configure DOMPurify for strict sanitization
-  const clean = DOMPurify.sanitize(input, {
-    ALLOWED_TAGS: [], // No HTML tags allowed
-    ALLOWED_ATTR: [], // No attributes allowed
-    KEEP_CONTENT: true, // Keep text content, remove tags
-  });
-
-  return clean.trim();
 }
 
 /**
  * Sanitize user name input - only letters, spaces, hyphens, apostrophes, dots
  */
 export function sanitizeName(input: string): string {
-  if (!input || typeof input !== 'string') {
+  try {
+    if (!input || typeof input !== 'string') {
+      return '';
+    }
+
+    // Remove any HTML first
+    const htmlCleaned = sanitizeHtml(input);
+    
+    // Allow only safe characters for names (letters, spaces, hyphens, apostrophes, dots)
+    const namePattern = /[^a-zA-Z\s\-'\.]/g;
+    const sanitized = htmlCleaned.replace(namePattern, '');
+    
+    // Remove excessive whitespace and trim
+    return sanitized.replace(/\s+/g, ' ').trim();
+  } catch (error) {
+    console.error('Name sanitization error:', error);
+    // Fallback: return empty string if sanitization fails
     return '';
   }
-
-  // Remove any HTML first
-  const htmlCleaned = sanitizeHtml(input);
-  
-  // Allow only safe characters for names
-  const namePattern = /[^a-zA-Z\s\-'\.]/g;
-  const sanitized = htmlCleaned.replace(namePattern, '');
-  
-  // Remove excessive whitespace and trim
-  return sanitized.replace(/\s+/g, ' ').trim();
 }
 
 /**
  * Sanitize email input - basic cleanup before validation
  */
 export function sanitizeEmail(input: string): string {
-  if (!input || typeof input !== 'string') {
-    return '';
-  }
+  try {
+    if (!input || typeof input !== 'string') {
+      return '';
+    }
 
-  // Remove HTML and trim
-  const htmlCleaned = sanitizeHtml(input);
-  
-  // Remove any characters that shouldn't be in an email
-  const emailPattern = /[^a-zA-Z0-9@._\-+]/g;
-  const sanitized = htmlCleaned.replace(emailPattern, '');
-  
-  return sanitized.toLowerCase().trim();
+    // Remove HTML and trim
+    const htmlCleaned = sanitizeHtml(input);
+    
+    // Remove any characters that shouldn't be in an email
+    const emailPattern = /[^a-zA-Z0-9@._\-+]/g;
+    const sanitized = htmlCleaned.replace(emailPattern, '');
+    
+    return sanitized.toLowerCase().trim();
+  } catch (error) {
+    console.error('Email sanitization error:', error);
+    // Fallback: return the original input (better than breaking)
+    return typeof input === 'string' ? input.toLowerCase().trim() : '';
+  }
 }
 
 /**

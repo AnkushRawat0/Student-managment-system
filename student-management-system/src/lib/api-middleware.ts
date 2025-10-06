@@ -8,6 +8,7 @@
  * - XSS protection
  * - SQL injection prevention
  * - Rate limiting
+ * - CSRF protection
  */
 
 import { NextRequest } from 'next/server';
@@ -19,6 +20,11 @@ import {
   RateLimitConfig, 
   RATE_LIMIT_CONFIGS 
 } from './rate-limit';
+import { 
+  validateCSRFRequest, 
+  generateCSRFTokenPair,
+  requiresCSRFProtection
+} from './csrf';
 
 // Security configuration
 const SECURITY_CONFIG = {
@@ -221,7 +227,7 @@ export function createSecureErrorResponse(
 }
 
 /**
- * Enhanced middleware wrapper with security and rate limiting
+ * Enhanced middleware wrapper with comprehensive security
  */
 export function withSecurity<T>(
   handler: (data: T, request: NextRequest) => Promise<Response> | Response,
@@ -229,11 +235,35 @@ export function withSecurity<T>(
   options: {
     rateLimit?: RateLimitConfig;
     getUserId?: (request: NextRequest) => Promise<string | null> | string | null;
+    skipCSRF?: boolean;
+    csrfRequired?: boolean;
   } = {}
 ) {
   return async (request: NextRequest): Promise<Response> => {
     try {
-      // Step 1: Rate limiting check
+      // Step 1: CSRF Protection (for state-changing requests)
+      if (!options.skipCSRF && requiresCSRFProtection(request)) {
+        const csrfValidation = await validateCSRFRequest(request);
+        
+        if (!csrfValidation.valid) {
+          return new Response(
+            JSON.stringify({
+              error: 'CSRF validation failed',
+              message: csrfValidation.error,
+              timestamp: new Date().toISOString(),
+            }),
+            {
+              status: 403,
+              headers: {
+                'Content-Type': 'application/json',
+                ...getSecurityHeaders(),
+              },
+            }
+          );
+        }
+      }
+
+      // Step 2: Rate limiting check
       if (options.rateLimit) {
         let userId: string | null = null;
         if (options.getUserId) {
@@ -261,7 +291,7 @@ export function withSecurity<T>(
         }
       }
 
-      // Step 2: Input validation and sanitization (for non-GET requests)
+      // Step 3: Input validation and sanitization (for non-GET requests)
       if (request.method !== 'GET') {
         const validation = await validateAndSanitizeRequest(request, schema);
         

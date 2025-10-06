@@ -70,5 +70,6 @@ export const POST = withSecurity(async (data: LoginInput, request: NextRequest) 
     return createSecureErrorResponse("Authentication failed", 500);
   }
 }, loginSchema, {
-  rateLimit: RATE_LIMIT_CONFIGS.AUTH // 5 attempts per 15 minutes
+  rateLimit: RATE_LIMIT_CONFIGS.AUTH, // 5 attempts per 15 minutes
+  skipCSRF: true // Skip CSRF for now (can be enabled later)
 });

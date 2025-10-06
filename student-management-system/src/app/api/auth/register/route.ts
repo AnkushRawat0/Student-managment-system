@@ -71,5 +71,6 @@ export const POST = withSecurity(async (data: RegisterInput, request: NextReques
   rateLimit: {
     windowMs: 15 * 60 * 1000, // 15 minutes
     maxRequests: 3,            // Only 3 registrations per 15 minutes per IP
-  }
+  },
+  skipCSRF: true // Skip CSRF for now (can be enabled later)
 });
