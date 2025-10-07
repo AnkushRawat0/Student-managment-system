@@ -69,7 +69,7 @@ export function DeleteCourseModal({ course, isOpen, onClose }: DeleteCourseModal
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-600">{course.instructor}</span>
+                  <span className="text-gray-600">{course.coach?.user.name || 'No coach assigned'}</span>
                 </div>
                 
                 <div className="flex items-center gap-2">

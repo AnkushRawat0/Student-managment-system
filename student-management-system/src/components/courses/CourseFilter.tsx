@@ -29,13 +29,13 @@ export const CourseFilter = () => {
   };
 
   const handleInstructorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilters({ instructor: e.target.value });
+    setFilters({ coachId: e.target.value });
   };
   const clearAllFilters = () => {
-    setFilters({ searchTerm: "", status: undefined, instructor: "" });
+    setFilters({ searchTerm: "", status: undefined, coachId: "" });
   };
   const hasActiveFilters =
-    filters.searchTerm || filters.status || filters.instructor;
+    filters.searchTerm || filters.status || filters.coachId;
   return (
     <Card>
       <CardHeader>
@@ -95,7 +95,7 @@ export const CourseFilter = () => {
                 id="instructor"
                 type="text"
                 placeholder="Filter by instructor..."
-                value={filters.instructor || ""}
+                value={filters.coachId || ""}
                 onChange={handleInstructorChange}
               />
             </div>
@@ -134,10 +134,10 @@ export const CourseFilter = () => {
                 </button>
               </span>
             )}
-            {filters.instructor && (
+            {filters.coachId && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
-                Instructor: "{filters.instructor}"
-                <button onClick={() => setFilters({ instructor: "" })}>
+                Coach ID: "{filters.coachId}"
+                <button onClick={() => setFilters({ coachId: "" })}>
                   <X className="h-3 w-3" />
                 </button>
               </span>

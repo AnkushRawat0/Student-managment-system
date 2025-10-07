@@ -1,5 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { CoachFormData, CoachFiltersData } from '@/lib/validation';
+
+// Type for assigning existing users as coaches
+interface CoachAssignmentData {
+  userId: string;
+  subject: string;
+}
 
 export interface Coach {
   id: string;
@@ -48,8 +55,8 @@ interface CoachState {
   
   // Actions
   fetchCoaches: () => Promise<void>;
-  addCoach: (coachData: any) => Promise<void>;
-  updateCoach: (id: string, coachData: any) => Promise<void>;
+  addCoach: (coachData: CoachFormData | CoachAssignmentData) => Promise<void>;
+  updateCoach: (id: string, coachData: Partial<CoachFormData>) => Promise<void>;
   deleteCoach: (id: string) => Promise<void>;
   assignCourseToCoach: (coachId: string, courseId: string) => Promise<void>;
   unassignCourseFromCoach: (coachId: string, courseId: string) => Promise<void>;
@@ -88,13 +95,13 @@ export const useCoachStore = create<CoachState>()(
           
           const data = await response.json();
           set({ coaches: data.coaches, loading: false });
-        } catch (error: any) {
-          set({ error: error.message, loading: false });
+        } catch (error: unknown) {
+          set({ error: error instanceof Error ? error.message : 'Failed to fetch coaches', loading: false });
         }
       },
 
       // Add Coach
-      addCoach: async (coachData: any) => {
+      addCoach: async (coachData: CoachFormData | CoachAssignmentData) => {
         set({ loading: true, error: null });
         try {
           const response = await fetch('/api/coaches', {
@@ -114,14 +121,14 @@ export const useCoachStore = create<CoachState>()(
             loading: false,
             isAddModalOpen: false
           }));
-        } catch (error: any) {
-          set({ error: error.message, loading: false });
+        } catch (error: unknown) {
+          set({ error: error instanceof Error ? error.message : 'Failed to add coach', loading: false });
           throw error;
         }
       },
 
       // Update Coach
-      updateCoach: async (id: string, coachData: any) => {
+      updateCoach: async (id: string, coachData: Partial<CoachFormData>) => {
         set({ loading: true, error: null });
         try {
           const response = await fetch(`/api/coaches/${id}`, {
@@ -144,8 +151,8 @@ export const useCoachStore = create<CoachState>()(
             isEditModalOpen: false,
             selectedCoach: null
           }));
-        } catch (error: any) {
-          set({ error: error.message, loading: false });
+        } catch (error: unknown) {
+          set({ error: error instanceof Error ? error.message : 'Failed to update coach', loading: false });
           throw error;
         }
       },
@@ -169,8 +176,8 @@ export const useCoachStore = create<CoachState>()(
             isDeleteModalOpen: false,
             selectedCoach: null
           }));
-        } catch (error: any) {
-          set({ error: error.message, loading: false });
+        } catch (error: unknown) {
+          set({ error: error instanceof Error ? error.message : 'Failed to delete coach', loading: false });
           throw error;
         }
       },
@@ -189,8 +196,8 @@ export const useCoachStore = create<CoachState>()(
           
           // Refresh coaches to get updated data
           await get().fetchCoaches();
-        } catch (error: any) {
-          set({ error: error.message, loading: false });
+        } catch (error: unknown) {
+          set({ error: error instanceof Error ? error.message : 'Failed to assign course', loading: false });
         }
       },
 
@@ -208,8 +215,8 @@ export const useCoachStore = create<CoachState>()(
           
           // Refresh coaches to get updated data
           await get().fetchCoaches();
-        } catch (error: any) {
-          set({ error: error.message, loading: false });
+        } catch (error: unknown) {
+          set({ error: error instanceof Error ? error.message : 'Failed to unassign course', loading: false });
         }
       },
 

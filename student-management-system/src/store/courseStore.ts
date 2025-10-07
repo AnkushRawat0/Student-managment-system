@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { Course, CourseFormData, CourseFilters } from "@/types/course";
+import { Course, CourseFormData } from "@/types/course";
 import { CourseFiltersData } from "@/lib/validation";
 
 interface CourseState {
@@ -60,8 +60,8 @@ export const useCoursesStore = create<CourseState>()(
           if (filters.searchTerm)
             params.append("searchTerm", filters.searchTerm);
           if (filters.status) params.append("status", filters.status);
-          if (filters.instructor)
-            params.append("instructor", filters.instructor);
+          if (filters.coachId)
+            params.append("coachId", filters.coachId);
 
           const response = await fetch(`/api/courses?${params.toString()}`);
           if (!response.ok) throw new Error("Failed to fetch courses");
@@ -72,9 +72,9 @@ export const useCoursesStore = create<CourseState>()(
             filteredCourses: data.courses,
             isLoading: false,
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
           set({
-            error: error.message || "Failed to fetch courses",
+            error: error instanceof Error ? error.message : "Failed to fetch courses",
             isLoading: false,
           });
         }
@@ -104,7 +104,7 @@ export const useCoursesStore = create<CourseState>()(
             isLoading: false,
             showAddModal: false,
           }));
-        } catch (error: any) {
+        } catch (error: unknown) {
           set({ isLoading: false });
           throw error;
         }
@@ -135,7 +135,7 @@ export const useCoursesStore = create<CourseState>()(
             isLoading: false,
             showEditModal: false,
           }));
-        } catch (error: any) {
+        } catch (error: unknown) {
           set({ isLoading: false });
           throw error;
         }
@@ -161,9 +161,9 @@ export const useCoursesStore = create<CourseState>()(
             showDeleteDialog: false,
             selectedCourse: null,
           }));
-        } catch (error: any) {
+        } catch (error: unknown) {
           set({
-            error: error.message || "Failed to delete course",
+            error: error instanceof Error ? error.message : "Failed to delete course",
             isLoading: false,
           });
         }
@@ -194,7 +194,7 @@ export const useCoursesStore = create<CourseState>()(
             (course) =>
               course.name.toLowerCase().includes(searchLower) ||
               course.description.toLowerCase().includes(searchLower) ||
-              course.instructor.toLowerCase().includes(searchLower)
+              course.coach?.user.name.toLowerCase().includes(searchLower)
           );
         }
         if (filters.status) {
@@ -203,10 +203,9 @@ export const useCoursesStore = create<CourseState>()(
           );
         }
 
-        if (filters.instructor) {
-          const instructorLower = filters.instructor.toLowerCase();
+        if (filters.coachId) {
           filtered = filtered.filter((course) =>
-            course.instructor.toLowerCase().includes(instructorLower)
+            course.coachId === filters.coachId
           );
         }
 

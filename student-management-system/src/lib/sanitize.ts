@@ -13,7 +13,7 @@ export function sanitizeHtml(input: string): string {
     }
 
     // Remove HTML tags, scripts, and dangerous content
-    let clean = input
+    const clean = input
       // Remove script tags and content
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
       // Remove style tags and content

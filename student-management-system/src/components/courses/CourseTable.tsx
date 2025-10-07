@@ -118,7 +118,7 @@ export function CourseTable() {
                       </div>
                     </td>
                     <td className="py-3 px-4 text-gray-600">
-                      {course.instructor}
+                      {course.coach?.user.name || 'No coach assigned'}
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-1 text-gray-600">
