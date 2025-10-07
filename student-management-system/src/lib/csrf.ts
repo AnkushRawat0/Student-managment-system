@@ -29,7 +29,7 @@ const CSRF_CONFIG = {
   // Exempt methods that should be read-only
   exemptMethods: ['GET', 'HEAD', 'OPTIONS'],
 };
-
+  
 /**
  * Generate a cryptographically secure CSRF token
  */
